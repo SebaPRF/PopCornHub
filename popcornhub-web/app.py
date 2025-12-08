@@ -231,34 +231,31 @@ def init_data():
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
-    data = load_data()
-
     if request.method == "POST":
-        username = request.form["username"].strip()
-        email = request.form["email"].strip()
-        password = request.form["password"]
+        username = request.form.get("username").strip()
+        password = request.form.get("password")
 
-        if not username or not email or not password:
-            flash("Tous les champs sont obligatoires.", "danger")
-            return redirect(url_for("signup"))
+        # Vérifier si l'utilisateur existe déjà
+        for user in data["users"]:
+            if user["username"].lower() == username.lower():
+                flash("Ce nom d'utilisateur existe déjà.", "danger")
+                return redirect(url_for("signup"))
 
-        if find_user_by_username(data, username) or find_user_by_email(data, email):
-            flash("Nom d'utilisateur ou email déjà utilisé.", "danger")
-            return redirect(url_for("signup"))
+        # Créer le nouvel utilisateur
+        new_user = {
+            "id": len(data["users"]) + 1,
+            "username": username,
+            "password": generate_password_hash(password),
+            "is_admin": False,
+            "favorites": [],
+            "my_library": [],
+            "my_rentals": []
+        }
 
-        user_id = get_next_id(data["users"])
-        pwd_hash = generate_password_hash(password)
-        data["users"].append(
-            {
-                "id": user_id,
-                "username": username,
-                "email": email,
-                "password_hash": pwd_hash,
-                "is_admin": False,
-            }
-        )
-        save_data(data)
-        flash("Compte créé ! Vous pouvez vous connecter.", "success")
+        data["users"].append(new_user)
+        save_data()
+
+        flash("Compte créé avec succès ! Vous pouvez maintenant vous connecter.", "success")
         return redirect(url_for("login"))
 
     return render_template("signup.html")
