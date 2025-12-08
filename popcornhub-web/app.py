@@ -231,29 +231,32 @@ def init_data():
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
+    data = load_data()
+
     if request.method == "POST":
-        username = request.form.get("username").strip()
-        password = request.form.get("password")
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
 
-        # Vérifier si l'utilisateur existe déjà
-        for user in data["users"]:
-            if user["username"].lower() == username.lower():
-                flash("Ce nom d'utilisateur existe déjà.", "danger")
-                return redirect(url_for("signup"))
+        if not username or not password:
+            flash("Tous les champs sont obligatoires.", "danger")
+            return redirect(url_for("signup"))
 
-        # Créer le nouvel utilisateur
+        # Vérifier si le nom d'utilisateur existe déjà
+        existing = find_user_by_username(data, username)
+        if existing is not None:
+            flash("Ce nom d'utilisateur existe déjà.", "danger")
+            return redirect(url_for("signup"))
+
+        # Créer le nouvel utilisateur (sans email)
         new_user = {
-            "id": len(data["users"]) + 1,
+            "id": get_next_id(data["users"]),
             "username": username,
-            "password": generate_password_hash(password),
+            "password_hash": generate_password_hash(password),
             "is_admin": False,
-            "favorites": [],
-            "my_library": [],
-            "my_rentals": []
         }
 
         data["users"].append(new_user)
-        save_data()
+        save_data(data)
 
         flash("Compte créé avec succès ! Vous pouvez maintenant vous connecter.", "success")
         return redirect(url_for("login"))
