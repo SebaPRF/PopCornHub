@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Éditer le film {{ film_id }} - PopCornHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Modifier le film #{{ film_id }}</h1>
+
+  <form method="post" class="row g-3">
+    <div class="col-12">
+      <label class="form-label">Titre</label>
+      <input type="text" name="titre" class="form-control" value="{{ form.titre }}">
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Réalisateur</label>
+      <input type="text" name="realisateur" class="form-control" value="{{ form.realisateur }}">
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Genres (séparés par des virgules)</label>
+      <input type="text" name="genres" class="form-control" value="{{ form.genres }}">
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Résumé</label>
+      <textarea name="resume" rows="5" class="form-control">{{ form.resume }}</textarea>
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+      <button type="submit" class="btn btn-popcorn-primary">Enregistrer</button>
+      <a href="{{ url_for('film_detail', film_id=film_id) }}" class="btn btn-secondary">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <h1 class="page-title mb-4">Connexion</h1>
+
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="form-card">
+        <form method="post" action="{{ url_for('login') }}">
+          <div class="mb-3">
+            <label class="form-label" for="username">Nom d'utilisateur</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="password">Mot de passe</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+          </div>
+
+          <div class="d-grid mb-3">
+            <button type="submit" class="btn btn-popcorn-primary btn-lg">
+              Se connecter
+            </button>
+          </div>
+
+          <p class="text-center mt-2" style="font-size:0.95rem; opacity:0.9;">
+            Pas encore de compte ?
+            <a href="{{ url_for('signup') }}" class="text-decoration-none" style="color:#ff9800;">
+              Créer un compte
+            </a>
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

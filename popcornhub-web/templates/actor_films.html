@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Films avec {{ actor_name }} - PopCornHub{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="page-title mb-1">Films avec {{ actor_name }}</h1>
+      {% if total_films is defined %}
+        <p class="mb-0 opacity-75">{{ total_films }} film(s) trouvé(s)</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if films %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
+      {% for film in films %}
+        <div class="col">
+          <!-- Carte cliquable vers la page détail -->
+          <div class="film-card h-100"
+               onclick="window.location='{{ url_for('film_detail', film_id=film.id) }}'">
+
+            <!-- Affiche -->
+            <div class="film-card-poster-wrapper">
+              {% if film.affiche_url %}
+  <img src="{{ film.affiche_url }}"
+       alt="{{ film.titre }}"
+       class="card-img-top">
+{% else %}
+  <img src="{{ url_for('static', filename='default_poster.png') }}"
+       alt="{{ film.titre }}"
+       class="card-img-top">
+{% endif %}
+            </div>
+
+            <!-- Titre + année + icônes -->
+            <div class="film-card-body">
+              <h5 class="film-card-title mb-1">{{ film.titre }}</h5>
+
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="film-card-year">
+                  {{ film.annee or "—" }}
+                </span>
+
+                {% if session.get('user_id') and not session.get('is_admin') %}
+                  <div class="d-flex gap-2">
+
+                    <!-- PIN : Ma liste / vidéothèque -->
+                    <form method="post"
+                          action="{% if film.id in library_ids %}
+                                    {{ url_for('remove_from_library', film_id=film.id) }}
+                                  {% else %}
+                                    {{ url_for('add_to_library', film_id=film.id) }}
+                                  {% endif %}"
+                          class="pin-form">
+                      <button type="submit"
+                              class="pin-btn {% if film.id in library_ids %}is-in-list{% endif %}"
+                              title="{% if film.id in library_ids %}Retirer de ma liste{% else %}Ajouter à ma liste{% endif %}">
+                        <span class="pin-icon">📌</span>
+                      </button>
+                    </form>
+
+                    <!-- Cœur : favoris -->
+                    <form method="post"
+                          action="{{ url_for('toggle_favorite', film_id=film.id) }}"
+                          class="favorite-form">
+                      <button type="submit"
+                              class="favorite-btn {% if film.id in favorite_ids %}is-favorite{% endif %}"
+                              title="{% if film.id in favorite_ids %}Retirer de mes favoris{% else %}Ajouter à mes favoris{% endif %}">
+                        <span class="favorite-icon">❤</span>
+                      </button>
+                    </form>
+
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="opacity-75 mt-3">
+      Aucun film trouvé pour cet acteur pour le moment.
+    </p>
+  {% endif %}
+</div>
+{% endblock %}

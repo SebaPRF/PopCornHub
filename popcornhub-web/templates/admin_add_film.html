@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Ajouter un film - PopCornHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Ajouter un film</h1>
+
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" class="row g-3 mb-4">
+    <div class="col-md-8">
+      <label class="form-label">Titre du film</label>
+      <input type="text"
+             name="title"
+             class="form-control"
+             placeholder="Ex : Inception"
+             value="{{ film.titre if film else '' }}"
+             required>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Année (optionnelle)</label>
+      <input type="number"
+             name="year"
+             class="form-control"
+             placeholder="2010">
+    </div>
+
+    <div class="col-12">
+      <button type="submit" class="btn btn-popcorn-primary">
+        Rechercher
+      </button>
+      <a href="{{ url_for('index') }}" class="btn btn-secondary">
+        Annuler
+      </a>
+    </div>
+  </form>
+
+  {% if film %}
+    <hr>
+    <h2 class="h5 mb-3">Résultat trouvé</h2>
+    <div class="row g-3 align-items-center">
+      <div class="col-md-3">
+        {% if film.affiche_url %}
+          <img src="{{ film.affiche_url }}"
+               alt="{{ film.titre }}"
+               class="img-fluid rounded shadow">
+        {% else %}
+          <img src="{{ url_for('static', filename='default_poster.png') }}"
+               alt="{{ film.titre }}"
+               class="img-fluid rounded shadow">
+        {% endif %}
+      </div>
+      <div class="col-md-9">
+        <h3 class="h4 mb-1">{{ film.titre }}</h3>
+        {% if film.annee %}
+          <p class="mb-2 text-muted">Année : {{ film.annee }}</p>
+        {% endif %}
+        {% if film.resume %}
+          <p class="mb-3">{{ film.resume }}</p>
+        {% endif %}
+
+        <form method="post">
+          <input type="hidden" name="movie_id" value="{{ film.id }}">
+          <button type="submit" class="btn btn-popcorn-primary">
+            Ajouter ce film à la vidéothèque
+          </button>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

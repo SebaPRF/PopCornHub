@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Mes locations{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Mes locations</h1>
+
+{% if rentals %}
+  <table class="table table-dark table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Film</th>
+        <th>Période</th>
+        <th>Prix</th>
+        <th>État</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rentals %}
+        <tr>
+          <td>
+            <strong>{{ r.titre }}</strong><br>
+            <small>{{ r.annee }} • {{ r.realisateur }}</small>
+          </td>
+          <td>
+            <small>
+              Du {{ r.rented_at[:16].replace('T',' ') }}<br>
+              au {{ r.expires_at[:16].replace('T',' ') }}
+            </small>
+          </td>
+          <td>{{ "%.2f"|format(r.price_eur) }}&nbsp;€</td>
+          <td>
+            {% if r.is_active %}
+              <span class="badge bg-success">Active</span>
+            {% else %}
+              <span class="badge bg-secondary">Expirée</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            {% if r.is_active %}
+              <a href="{{ url_for('watch_film', film_id=r.film_id) }}" class="btn btn-popcorn-primary btn-sm">
+                ▶ Regarder
+              </a>
+            {% else %}
+              <form action="{{ url_for('rent_film', film_id=r.film_id) }}" method="post" class="d-inline">
+                <button class="btn btn-outline-light btn-sm">
+                  Relouer
+                </button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>Vous n'avez pas encore loué de films.</p>
+{% endif %}
+{% endblock %}

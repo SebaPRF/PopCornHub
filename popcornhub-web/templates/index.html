@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Vidéothèque{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <h1 class="page-title mb-4">Vidéothèque</h1>
+
+  <!-- Recherche + filtre genres -->
+  <form method="get" class="row g-3 align-items-center mb-4">
+    <div class="col-md-6">
+      <input
+        type="text"
+        name="q"
+        class="form-control form-control-lg"
+        placeholder="Rechercher un film..."
+        value="{{ search_query or '' }}"
+      >
+    </div>
+
+    <div class="col-md-3">
+      <select name="genre" class="form-control form-control-lg">
+        <option value="">Tous les genres</option>
+        {% for g in genres %}
+            <option value="{{ g.id }}" {% if selected_genre == g.id|string %}selected{% endif %}>
+                {{ g.name }}
+            </option>
+        {% endfor %}
+    </select>
+  </div>
+
+    <div class="col-md-3 d-grid">
+      <button type="submit" class="btn btn-popcorn-primary btn-lg">
+        Filtrer
+      </button>
+    </div>
+  </form>
+
+  <!-- Grille de films -->
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
+    {% for film in films %}
+      <div class="col">
+        <div class="film-card shadow-sm rounded h-100">
+
+          <!-- Affiche cliquable vers la page détail -->
+          <a href="{{ url_for('film_detail', film_id=film.id) }}"
+             class="film-card-poster-link">
+            {% if film.affiche_url %}
+            {% if film.affiche_url %}
+            <img src="{{ film.affiche_url }}"
+                 alt="{{ film.titre }}"
+                 class="card-img-top">
+          {% else %}
+            <img src="{{ url_for('static', filename='default_poster.png') }}"
+                 alt="{{ film.titre }}"
+                 class="card-img-top">
+          {% endif %}
+            {% else %}
+              <img src="{{ url_for('static', filename='default_poster.png') }}"
+                   class="film-card-poster"
+                   alt="{{ film.titre }}">
+            {% endif %}
+          </a>
+
+          <!-- Texte -->
+          <div class="film-card-body">
+            <h5 class="film-title mb-1">{{ film.titre }}</h5>
+
+            <div class="film-meta d-flex justify-content-between align-items-center">
+              <span class="film-date">
+                {% if film.date_sortie %}
+                  {{ film.date_sortie }}
+                {% else %}
+                  {{ film.annee }}
+                {% endif %}
+              </span>
+
+              <!-- Icônes ❤ (favoris) + 📌 (liste) -->
+              <div class="d-flex gap-2">
+                <!-- Favoris -->
+                <form method="post"
+                      action="{{ url_for('toggle_favorite', film_id=film.id) }}">
+                  <button type="submit"
+                          class="favorite-btn {% if film.id in favorite_ids %}is-favorite{% endif %}"
+                          title="{% if film.id in favorite_ids %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}">
+                    <span class="favorite-icon">❤</span>
+                  </button>
+                </form>
+
+                <!-- Ma liste / vidéothèque -->
+                <form method="post"
+                      action="{% if film.id in library_ids %}{{ url_for('remove_from_library', film_id=film.id) }}{% else %}{{ url_for('add_to_library', film_id=film.id) }}{% endif %}">
+                  <button type="submit"
+                          class="pin-btn {% if film.id in library_ids %}is-in-list{% endif %}"
+                          title="{% if film.id in library_ids %}Retirer de ma liste{% else %}Ajouter à ma liste{% endif %}">
+                    <span class="pin-icon">📌</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if total_pages and total_pages > 1 %}
+    <nav class="mt-4">
+      <ul class="pagination justify-content-center">
+        <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+          <a class="page-link"
+             href="{{ url_for('index', page=page-1, q=search_query, genre=selected_genre) }}">
+            &laquo;
+          </a>
+        </li>
+
+        {% for p in range(1, total_pages + 1) %}
+          {% if p >= page-2 and p <= page+2 %}
+            <li class="page-item {% if p == page %}active{% endif %}">
+              <a class="page-link"
+                 href="{{ url_for('index', page=p, q=search_query, genre=selected_genre) }}">
+                {{ p }}
+              </a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+          <a class="page-link"
+             href="{{ url_for('index', page=page+1, q=search_query, genre=selected_genre) }}">
+            &raquo;
+          </a>
+        </li>
+      </ul>
+    </nav>
+  {% endif %}
+
+</div>
+{% endblock %}

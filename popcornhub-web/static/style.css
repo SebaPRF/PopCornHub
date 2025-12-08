@@ -1,0 +1,395 @@
+/* ============================
+   🎨 THEME GLOBAL NOIR / ORANGE
+============================ */
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: #111;      /* fond presque noir */
+  color: #f5f5f5;
+  font-family: "Poppins", system-ui, sans-serif;
+  margin: 0;
+}
+
+/* Couleur globale du texte (par défaut) */
+h1, h2, h3, h4, h5, h6,
+p, span, li, label {
+  color: #f5f5f5;
+}
+
+/* ============================
+   🌟 NAVBAR
+============================ */
+.navbar-popcornhub {
+  background-color: #000;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+}
+
+.navbar-brand {
+  font-family: "Bebas Neue", system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.navbar-user {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+/* ============================
+   🟠 BOUTONS POPCORNHUB
+============================ */
+.btn-popcorn-primary {
+  background-color: #ff9800;
+  border: none;
+  color: #111;
+  font-weight: 600;
+  border-radius: 999px;
+  padding-inline: 1.4rem;
+}
+
+.btn-popcorn-primary:hover {
+  background-color: #ffa726;
+  color: #111;
+}
+
+.btn-outline-popcorn {
+  border-radius: 999px;
+  border: 1px solid #ff9800;
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.btn-outline-popcorn:hover {
+  background-color: #ff9800;
+  color: #111;
+}
+
+.btn-popcorn-secondary {
+  background-color: #333;
+  color: #f5f5f5;
+  border-radius: 999px;
+  border: none;
+}
+
+.btn-popcorn-secondary:hover {
+  background-color: #555;
+}
+
+/* override Bootstrap .btn-primary si tu l'utilises */
+.btn-primary {
+  background-color: #ff9800;
+  border: none;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.btn-primary:hover {
+  background-color: #ffa726;
+}
+
+/* ============================
+   🧭 TITRES & BARRE DE RECHERCHE
+============================ */
+.page-title {
+  font-size: 2.6rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.search-bar input,
+.search-bar select {
+  border-radius: 999px;
+  border: none;
+  background-color: #f5f5f5;
+  color: #111;
+}
+
+.search-bar input::placeholder {
+  color: #888;
+}
+
+.search-bar input:focus,
+.search-bar select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #ff9800aa;
+}
+
+/* ============================
+   🎬 CARDS FILMS (INDEX, PROFIL…)
+============================ */
+
+.film-card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Carte principale */
+.film-card {
+  background-color: #151515;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.film-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 26px 50px rgba(0, 0, 0, 0.8);
+}
+
+/* Affiche */
+.film-card-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;         
+  background-color: #000;
+  border-radius: 14px 14px 0 0;
+}
+
+/* Corps texte de la carte */
+.film-card-body {
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.film-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+}
+
+.film-meta {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+/* ============================
+   ❤️ FAVORIS (COEUR)
+============================ */
+.favorite-form {
+  margin: 0;
+}
+
+.favorite-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.favorite-btn:focus {
+  outline: none;
+}
+
+.favorite-icon {
+  font-size: 1.6rem;
+  color: rgba(255, 255, 255, 0.4);
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease,
+    text-shadow 0.2s ease;
+}
+
+/* Grossit au survol */
+.favorite-btn:hover .favorite-icon {
+  transform: scale(1.25);
+}
+
+/* Coeur actif (film en favori) */
+.favorite-btn.is-favorite .favorite-icon {
+  color: #ff9800;
+  text-shadow: 0 0 8px rgba(255, 152, 0, 0.8);
+}
+
+/* ============================
+   📌 MA LISTE (PIN)
+============================ */
+.pin-form {
+  margin: 0;
+}
+
+.pin-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.pin-btn:focus {
+  outline: none;
+}
+
+.pin-icon {
+  font-size: 1.6rem;
+  color: rgba(255, 255, 255, 0.4);
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease,
+    text-shadow 0.2s ease;
+}
+
+.pin-btn:hover .pin-icon {
+  transform: scale(1.25);
+}
+
+.pin-btn.is-in-list .pin-icon {
+  color: #ff9800;
+  text-shadow: 0 0 8px rgba(255, 152, 0, 0.8);
+}
+
+/* ============================
+   🔢 PAGINATION
+============================ */
+.pagination .page-link {
+  background-color: #1f1f1f;
+  border-color: #333;
+  color: #f5f5f5;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #ff9800;
+  border-color: #ff9800;
+  color: #111;
+}
+
+.pagination .page-link:hover {
+  background-color: #ffa726;
+  border-color: #ffa726;
+  color: #111;
+}
+
+/* ============================
+   👤 PROFIL — SIDEBAR
+============================ */
+.profile-layout {
+  max-width: 1200px;
+}
+
+.profile-sidebar {
+  background-color: #151515;
+  border-radius: 18px;
+  padding: 1.5rem 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.profile-nav-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+}
+
+.profile-nav .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #bbb;
+  padding: 0.4rem 0.25rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.profile-nav .nav-link:hover {
+  background-color: #222;
+  color: #fff;
+}
+
+.profile-nav .nav-link.active {
+  background-color: #ff9800;
+  color: #111;
+  font-weight: 600;
+}
+
+/* ============================
+   🎭 ACTEURS
+============================ */
+.actor-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background-color: #151515;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.actor-avatar-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #000;
+}
+
+.actor-pill-name {
+  font-size: 0.95rem;
+}
+
+/* ============================
+   🧾 FORM CARDS (login, signup, admin)
+============================ */
+.form-card {
+  background-color: #151515;
+  border-radius: 18px;
+  padding: 2rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.form-card .form-label {
+  color: #f5f5f5;
+}
+
+.form-card .form-control,
+.form-card .form-select,
+.form-card textarea {
+  background-color: #1f1f1f;
+  border: 1px solid #333;
+  color: #f5f5f5;
+}
+
+.form-card .form-control:focus,
+.form-card .form-select:focus,
+.form-card textarea:focus {
+  background-color: #222;
+  border-color: #ff9800;
+  box-shadow: 0 0 0 1px #ff9800aa;
+}
+
+/* ============================
+   🎬 ECRAN DE LECTURE
+============================ */
+.watch-player {
+  margin-top: 1rem;
+  max-width: 800px;
+}
+
+.watch-screen {
+  background: #000;
+  border-radius: 18px;
+  padding: 3rem 2rem;
+  text-align: center;
+  border: 2px solid #ff9800;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
+  font-size: 1.1rem;
+}
+
+/* ============================
+   🟩 BADGE LOCATION EN COURS
+============================ */
+.rental-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #4caf50;
+  color: #111;
+  font-weight: 600;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+  font-size: 0.75rem;
+}

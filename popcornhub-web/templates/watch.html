@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Regarder {{ film.titre }}{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Regarder {{ film.titre }}</h1>
+
+<p class="mb-3">
+  Location active jusqu’au
+  <strong>{{ expires_at.strftime("%d/%m/%Y %H:%M") }}</strong>.
+</p>
+
+<div class="watch-player">
+  <div class="watch-screen">
+    <p class="mb-2">🎬 Lecture simulée</p>
+    <p class="mb-0">Ici on pourrait intégrer un vrai player vidéo.</p>
+  </div>
+</div>
+
+<div class="mt-4">
+  <a href="{{ url_for('film_detail', film_id=film.id) }}" class="btn btn-outline-light">
+    ⬅ Retour à la fiche du film
+  </a>
+</div>
+{% endblock %}

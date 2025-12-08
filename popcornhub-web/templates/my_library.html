@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Ma vidéothèque{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Ma vidéothèque</h1>
+
+{% if films %}
+  <div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for film in films %}
+    <div class="col">
+      <div class="card h-100 card-popcorn">
+        {% if film.affiche_url %}
+  <img src="{{ film.affiche_url }}"
+       alt="{{ film.titre }}"
+       class="card-img-top">
+{% else %}
+  <img src="{{ url_for('static', filename='default_poster.png') }}"
+       alt="{{ film.titre }}"
+       class="card-img-top">
+{% endif %}
+        <div class="card-body">
+          <h5 class="card-title">{{ film.titre }}</h5>
+          <p class="card-text">{{ film.annee }} • {{ film.realisateur }}</p>
+        </div>
+        <div class="card-footer d-flex justify-content-between">
+          <form action="{{ url_for('remove_from_library', film_id=film.id) }}" method="post">
+            <button class="btn btn-secondary btn-sm">Retirer</button>
+          </form>
+          <a href="{{ url_for('film_detail', film_id=film.id) }}" class="btn btn-outline-light btn-sm">
+            Détails
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>Votre vidéothèque est vide. Ajoutez des films depuis le catalogue PopCornHub.</p>
+{% endif %}
+
+{% endblock %}

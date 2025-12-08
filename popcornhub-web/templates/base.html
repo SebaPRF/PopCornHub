@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>{% block title %}PopCornHub{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    >
+
+    <!-- THEME NOIR & ORANGE -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-dark navbar-expand-lg navbar-popcornhub px-3 py-2">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('index') }}">
+        <span class="logo-popcorn">🍿</span>
+        <span class="logo-text">PopCornHub</span>
+      </a>
+
+      <div class="ms-auto d-flex align-items-center">
+        {% if session.get('user_id') %}
+          <!-- ===== Utilisateur connecté ===== -->
+          <div class="d-flex align-items-center gap-3">
+
+            <!-- Avatar + Bonjour + Nom + badge ADMIN -->
+            <div class="d-flex align-items-center gap-2">
+
+              <!-- Avatar rond avec initiale -->
+              <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center"
+                   style="width:32px;height:32px;font-weight:600;">
+                {{ session.username[:1]|upper }}
+              </div>
+
+              <!-- Texte Bonjour + nom + badge -->
+              <div class="d-flex flex-column">
+                <span class="text-light" style="font-size:0.8rem; opacity:.7;">Bonjour</span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="text-light fw-semibold" style="font-size:0.95rem;">
+                    {{ session.username }}
+                  </span>
+
+                  {% if session.get('is_admin') %}
+                    <span class="badge bg-danger text-uppercase"
+                          style="font-size:0.65rem; letter-spacing:.08em;">
+                      Admin
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Menu admin ou simple profil -->
+            {% if session.get('is_admin') %}
+              <div class="dropdown">
+                <button class="btn btn-outline-popcorn btn-sm dropdown-toggle px-3"
+                        type="button"
+                        id="adminMenu"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                  Espace admin
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark"
+                    aria-labelledby="adminMenu">
+                  <li>
+                    <a class="dropdown-item"
+                       href="{{ url_for('admin_add_film') }}">
+                      Ajouter un film
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item"
+                       href="{{ url_for('profile') }}">
+                      Profil
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            {% else %}
+              <a href="{{ url_for('profile') }}"
+                 class="btn btn-outline-popcorn btn-sm px-3">
+                Profil
+              </a>
+            {% endif %}
+
+            <!-- Logout -->
+            <a href="{{ url_for('logout') }}"
+               class="btn btn-popcorn-primary btn-sm px-3 ms-2">
+              Logout
+            </a>
+
+          </div>
+        {% else %}
+          <!-- ===== Personne connectée : boutons Login / Signup ===== -->
+          <div class="d-flex align-items-center gap-2">
+            <a href="{{ url_for('login') }}"
+               class="btn btn-outline-popcorn btn-sm px-3">
+              Se connecter
+            </a>
+            <a href="{{ url_for('signup') }}"
+               class="btn btn-popcorn-primary btn-sm px-3">
+              Créer un compte
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </nav>
+
+    <!-- CONTENU -->
+    <main class="container py-4">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script menu "3 points" -->
+    <script src="{{ url_for('static', filename='js/film_menu.js') }}"></script>
+
+    <!-- 🌟 RESTAURE AUTOMATIQUEMENT LA POSITION DU SCROLL 🌟 -->
+    <script>
+      // Sauvegarde la position avant de quitter la page
+      window.addEventListener("beforeunload", () => {
+          localStorage.setItem("scrollPos", window.scrollY);
+      });
+
+      // Restaure la position au chargement
+      window.addEventListener("load", () => {
+          const pos = localStorage.getItem("scrollPos");
+          if (pos !== null) {
+              window.scrollTo(0, parseInt(pos));
+          }
+      });
+    </script>
+
+    {% block scripts %}{% endblock %}
+
+  </body>
+</html>

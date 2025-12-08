@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Inscription{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Créer un compte</h1>
+
+<div class="col-md-6">
+  <div class="form-card">
+    <form method="post">
+      <div class="mb-3">
+        <label class="form-label">Nom d'utilisateur</label>
+        <input class="form-control" name="username" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" name="email" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Mot de passe</label>
+        <input type="password" class="form-control" name="password" required>
+      </div>
+      <button class="btn btn-popcorn-primary">Créer le compte</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
