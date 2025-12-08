@@ -5,7 +5,7 @@ services:
     build: ./popcornhub-web
     container_name: popcornhub-web
     ports:
-      - "8080:8080"
+      - "8080:5000"
     volumes:
       - ./popcornhub-web:/app
     environment:
