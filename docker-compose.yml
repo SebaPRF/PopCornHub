@@ -5,8 +5,7 @@ services:
     build: ./popcornhub-web
     container_name: popcornhub-web
     ports:
-      - "8080:5000"
+      - "8080:5000"        
     environment:
-      # IP de la machine API (10.11.37.1)
       - API_URL=http://10.11.37.1:5000
     restart: unless-stopped
