@@ -1,0 +1,56 @@
+{
+  "favorites": {
+    "2": [
+      1180831,
+      755898
+    ]
+  },
+  "library": {
+    "2": [
+      1419406
+    ]
+  },
+  "rentals": [
+    {
+      "expires_at": "2025-12-11T13:20:08",
+      "id": 1,
+      "movie_id": 1228246,
+      "price_cents": 399,
+      "rented_at": "2025-12-08T13:20:08",
+      "user_id": 2
+    }
+  ],
+  "reviews": [
+    {
+      "comment": "J'ai peur",
+      "created_at": "2025-12-08T13:20:15",
+      "id": 1,
+      "movie_id": 1228246,
+      "rating": 4,
+      "user_id": 2
+    }
+  ],
+  "users": [
+    {
+      "email": "admin@popcornhub.local",
+      "id": 1,
+      "is_admin": true,
+      "password_hash": "scrypt:32768:8:1$WDoNH5eBdAWTXQ8O$151d160eb7dc12889de66cdd39f38a5880d70092a0a9fe83db32d9db620092296835ad46f11c8ed476a2942b6e1ec3a58fd6dfe12a4f3638acce6646563b3a24",
+      "username": "admin"
+    },
+    {
+      "email": "elie.ctl@gmail.com",
+      "id": 2,
+      "is_admin": false,
+      "password_hash": "scrypt:32768:8:1$bZlxC7ULHf9AAQ7v$b6c88adff861620e12f6fb9225999a15ca0069ac0da8b593f232d4fbcfe357ff610795f7bef595264c2af0b6e34d2415a49681bad59d578d8a978f0990169316",
+      "username": "eliectl"
+    },
+    {
+      "id": 3,
+      "username": "seba.prf",
+      "email": "seba.prf@gmail.com",
+      "password_hash": "scrypt:32768:8:1$vvIz86BmyXRfuPSG$0dfbf6c9956a9c7eac72abc6f3b85cb487b35c9ccad62fbd27363d196dddb90d304a7ac41eb8678f0055b20ef4e9d6efd0ac6c9c417909e4be2aaeee4bf43701",
+      "is_admin": false
+    }
+  ]
+}
