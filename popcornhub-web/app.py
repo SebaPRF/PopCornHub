@@ -2,6 +2,7 @@ from flask import (
     Flask,
     render_template,
     request,
+    abort,
     redirect,
     url_for,
     session,
@@ -640,68 +641,132 @@ def own_film(film_id):
     flash("Le film a été ajouté à votre vidéothèque.", "success")
     return redirect(url_for("film_detail", film_id=film_id))
 
-@app.get("/films/<int:film_id>/availability")
-@login_required
+@app.route("/films/<int:film_id>/availability")
 def film_availability(film_id):
-    """Affiche les utilisateurs qui possèdent ce film + filtres."""
-    data = load_data()
+    """Page 'Exemplaires disponibles' pour un film.
 
-    # Info film
-    movie = tmdb_get(f"/movie/{film_id}")
-    film = tmdb_movie_to_film(movie)
+    Utilise les données JSON (user_owns) et permet :
+      - filtre par format (Blu-ray / Digital / les deux / tous)
+      - filtre par prix max
+      - tri par prix ou par 'note vendeur' (placeholder)
+    """
 
-    fmt = request.args.get("format", "all")  # 'all', 'bluray', 'digital'
-    max_price = request.args.get("max_price", "").strip()
+    # --- 1) Infos du film ---
     try:
-        max_price_val = float(max_price.replace(",", ".")) if max_price else None
-    except ValueError:
-        max_price_val = None
+        movie = tmdb_get(f"/movie/{film_id}")
+        film = tmdb_movie_to_film(movie)
+    except Exception:
+        abort(404)
 
-    owners = []
-    users_by_id = {u["id"]: u for u in data["users"]}
+    # --- 2) Récupérer les propriétaires depuis data.json ---
+    data = load_data()
+    users_by_id = {u["id"]: u for u in data.get("users", [])}
 
-    for own in data.get("user_owns", []):
-        if own["movie_id"] != film_id:
-            continue
-        if own["user_id"] == session["user_id"]:
+    ownerships_raw = [
+        o for o in data.get("user_owns", [])
+        if o.get("movie_id") == film_id
+    ]
+
+    entries = []
+    for own in ownerships_raw:
+        user = users_by_id.get(own["user_id"])
+        if not user:
             continue
 
-        if fmt == "bluray" and not own.get("has_bluray"):
-            continue
-        if fmt == "digital" and not own.get("has_digital"):
+        # Optionnel : ne pas proposer ses propres exemplaires
+        if session.get("user_id") == own["user_id"]:
             continue
 
-        prices = []
-        if own.get("has_bluray") and own.get("bluray_price") is not None:
-            prices.append(own["bluray_price"])
-        if own.get("has_digital") and own.get("digital_price") is not None:
-            prices.append(own["digital_price"])
+        has_bluray = bool(own.get("has_bluray"))
+        has_digital = bool(own.get("has_digital"))
+
+        bluray_price = own.get("bluray_price")
+        digital_price = own.get("digital_price")
+
+        prices = [p for p in [bluray_price, digital_price] if p is not None]
         min_price = min(prices) if prices else None
 
-        if max_price_val is not None and min_price is not None and min_price > max_price_val:
-            continue
+        # Placeholder pour une future "note vendeur"
+        seller_rating = own.get("seller_rating")  # actuel. non utilisé => None
 
-        user = users_by_id.get(own["user_id"])
-        username = user["username"] if user else f"Utilisateur #{own['user_id']}"
-
-        owners.append(
+        entries.append(
             {
-                "username": username,
-                "has_bluray": own.get("has_bluray", False),
-                "has_digital": own.get("has_digital", False),
-                "bluray_price": own.get("bluray_price"),
-                "digital_price": own.get("digital_price"),
+                "owner_id": user["id"],
+                "owner_name": user["username"],
+                "has_bluray": has_bluray,
+                "has_digital": has_digital,
+                "bluray_price": bluray_price,
+                "digital_price": digital_price,
                 "bluray_max_days": own.get("bluray_max_days"),
                 "digital_max_days": own.get("digital_max_days"),
+                "min_price": min_price,
+                "seller_rating": seller_rating,
             }
         )
+
+    # --- 3) Récupérer les filtres GET ---
+    format_filter = request.args.get("format", "all")  # all | bluray | digital | both
+    sort_by = request.args.get("sort_by", "price_asc")  # price_asc/desc, rating_asc/desc
+    max_price_str = request.args.get("max_price", "").strip()
+
+    # Filtre par format
+    if format_filter == "bluray":
+        entries = [e for e in entries if e["has_bluray"]]
+    elif format_filter == "digital":
+        entries = [e for e in entries if e["has_digital"]]
+    elif format_filter == "both":
+        entries = [e for e in entries if e["has_bluray"] and e["has_digital"]]
+    # sinon "all" → aucun filtre
+
+    # Filtre par prix max
+    max_price = None
+    if max_price_str:
+        try:
+            max_price = float(max_price_str.replace(",", "."))
+        except ValueError:
+            max_price = None
+
+    if max_price is not None:
+        entries = [
+            e
+            for e in entries
+            if e["min_price"] is not None and e["min_price"] <= max_price
+        ]
+
+    # --- 4) Tri ---
+    def price_key(e):
+        # très cher si prix manquant
+        return e["min_price"] if e["min_price"] is not None else 999999
+
+    def rating_key(e):
+        # 0 si pas de note vendeur
+        return e["seller_rating"] if e["seller_rating"] is not None else 0
+
+    reverse = False
+    if sort_by == "price_asc":
+        key_func = price_key
+        reverse = False
+    elif sort_by == "price_desc":
+        key_func = price_key
+        reverse = True
+    elif sort_by == "rating_desc":
+        key_func = rating_key
+        reverse = True
+    elif sort_by == "rating_asc":
+        key_func = rating_key
+        reverse = False
+    else:
+        key_func = price_key  # fallback
+
+    entries.sort(key=key_func, reverse=reverse)
 
     return render_template(
         "film_availability.html",
         film=film,
-        owners=owners,
-        fmt=fmt,
-        max_price=max_price,
+        entries=entries,
+        format_filter=format_filter,
+        sort_by=sort_by,
+        max_price=max_price_str,
     )
 
 # ---------- Favoris (❤️) ----------

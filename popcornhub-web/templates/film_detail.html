@@ -25,7 +25,7 @@
     <div class="col-md-8">
       <h1 class="mb-2">{{ film.titre }}</h1>
 
-      <p class="text-muted mb-2">
+      <p class="text-light mb-2">
         {% if film.annee %}{{ film.annee }}{% endif %}
         {% if film.realisateur %} • Réalisateur : {{ film.realisateur }}{% endif %}
       </p>
@@ -49,129 +49,129 @@
           <span class="text-warning">{{ avg_rating }}/5</span>
           <span class="text-muted">({{ reviews_count }} avis)</span>
         {% else %}
-          <span class="text-muted">Aucun avis pour le moment.</span>
+          <span class="text-light">Aucun avis pour le moment.</span>
         {% endif %}
       </div>
 
-    </div>
-  </div>
+      <!-- DISTRIBUTION (ACTEURS) - style “chips” comme avant -->
+      <h2 class="h4 mb-3">Distribution</h2>
 
-  <hr class="my-4">
-
-  <!-- DISTRIBUTION (ACTEURS) - style “chips” comme avant -->
-  <h2 class="h4 mb-3">Distribution</h2>
-
-  <div class="d-flex flex-wrap gap-2 mb-4">
-    {% for actor in actors %}
-      <a href="{{ url_for('actor_films', actor_name=actor.name) }}"
-         class="btn btn-outline-light btn-sm d-flex align-items-center rounded-pill"
-         style="background-color:#111;">
-        <span class="rounded-circle overflow-hidden me-2"
-              style="width:32px;height:32px;">
-          <img src="{{ actor.image_url }}"
-               alt="{{ actor.name }}"
-               class="w-100 h-100"
-               style="object-fit:cover;">
-        </span>
-        <span class="small">{{ actor.name }}</span>
-      </a>
-    {% endfor %}
-  </div>
-
-  <hr class="my-4">
-
-  <!-- LOCATION : nouveaux boutons -->
-  <h2 class="h4 mb-3">Location</h2>
-
-  <div class="d-flex flex-wrap gap-2 mb-4">
-    <!-- Ajouter à ma vidéothèque -->
-    <button class="btn btn-warning fw-semibold"
-            data-bs-toggle="modal"
-            data-bs-target="#ownFilmModal">
-      Ajouter à ma vidéothèque
-    </button>
-
-    <!-- Voir les exemplaires disponibles -->
-    <a href="{{ url_for('film_availability', film_id=film.id) }}"
-       class="btn btn-outline-light">
-      Voir les exemplaires disponibles
-      {% if owners_count and owners_count > 0 %}
-        <span class="badge bg-success ms-1">{{ owners_count }}</span>
-      {% endif %}
-    </a>
-
-    {% if trailer_key %}
-      <!-- Bande-annonce en popup (modal) -->
-      <button type="button"
-              class="btn btn-outline-danger"
-              data-bs-toggle="modal"
-              data-bs-target="#trailerModal">
-        Voir la bande-annonce
-      </button>
-    {% endif %}
-  </div>
-
-  <hr class="my-4">
-
-  <!-- AVIS UTILISATEURS -->
-  <h2 class="h4 mb-3">Avis des utilisateurs</h2>
-
-  {% if session.get('user_id') %}
-    <form action="{{ url_for('add_or_update_review', film_id=film.id) }}"
-          method="post"
-          class="mb-4">
-      <div class="row g-2 align-items-center">
-        <div class="col-md-2">
-          <label for="rating" class="form-label mb-0">Votre note</label>
-          <select name="rating" id="rating" class="form-select form-select-sm">
-            {% for n in range(1,6) %}
-              <option value="{{ n }}"
-                      {% if user_review and user_review.rating == n %}selected{% endif %}>
-                {{ n }}/5
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-8">
-          <label for="comment" class="form-label mb-0">Commentaire</label>
-          <textarea name="comment" id="comment" rows="2"
-                    class="form-control form-control-sm"
-                    placeholder="Partagez votre avis...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button type="submit" class="btn btn-popcorn-primary w-100">
-            Enregistrer
-          </button>
-        </div>
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        {% for actor in actors %}
+          <a href="{{ url_for('actor_films', actor_name=actor.name) }}"
+             class="btn btn-outline-light btn-sm d-flex align-items-center rounded-pill"
+             style="background-color:#111;">
+            <span class="rounded-circle overflow-hidden me-2"
+                  style="width:32px;height:32px;">
+              <img src="{{ actor.image_url }}"
+                   alt="{{ actor.name }}"
+                   class="w-100 h-100"
+                   style="object-fit:cover;">
+            </span>
+            <span class="small">{{ actor.name }}</span>
+          </a>
+        {% endfor %}
       </div>
-    </form>
-  {% else %}
-    <p class="text-muted">
-      <a href="{{ url_for('login') }}" class="link-light">Connectez-vous</a>
-      pour laisser un avis.
-    </p>
-  {% endif %}
 
-  {% if reviews %}
-    <div class="list-group list-group-flush">
-      {% for r in reviews %}
-        <div class="list-group-item bg-dark border-secondary">
-          <div class="d-flex justify-content-between">
-            <div>
-              <strong>{{ r.username }}</strong>
-              <span class="ms-2 text-warning">{{ r.rating }}/5</span>
-            </div>
-            <small class="text-muted">
-              {{ r.created_at }}
-            </small>
-          </div>
-          {% if r.comment %}
-            <p class="mb-0 mt-1">{{ r.comment }}</p>
+      <hr class="my-4">
+
+      <!-- LOCATION : nouveaux boutons -->
+      <h2 class="h4 mb-3">Location</h2>
+
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        <!-- Ajouter à ma vidéothèque -->
+        <button class="btn btn-warning fw-semibold"
+                data-bs-toggle="modal"
+                data-bs-target="#ownFilmModal">
+          Ajouter à ma vidéothèque
+        </button>
+
+        <!-- Voir les exemplaires disponibles -->
+        <a href="{{ url_for('film_availability', film_id=film.id) }}"
+           class="btn btn-outline-light">
+          Voir les exemplaires disponibles
+          {% if owners_count and owners_count > 0 %}
+            <span class="badge bg-success ms-1">{{ owners_count }}</span>
           {% endif %}
+        </a>
+
+        {% if trailer_key %}
+          <!-- Bande-annonce en popup (modal) -->
+          <button type="button"
+                  class="btn btn-outline-danger"
+                  data-bs-toggle="modal"
+                  data-bs-target="#trailerModal">
+            Voir la bande-annonce
+          </button>
+        {% endif %}
+      </div>
+
+      <hr class="my-3">
+
+      <!-- AVIS UTILISATEURS -->
+      <h2 class="h4 mb-3">Avis des utilisateurs</h2>
+
+      {% if session.get('user_id') %}
+        <form action="{{ url_for('add_or_update_review', film_id=film.id) }}"
+              method="post"
+              class="mb-4">
+          <div class="row g-2 align-items-center">
+            <div class="col-md-2">
+              <label for="rating" class="form-label mb-0">Votre note</label>
+              <select name="rating" id="rating" class="form-select form-select-sm">
+                {% for n in range(1,6) %}
+                  <option value="{{ n }}"
+                          {% if user_review and user_review.rating == n %}selected{% endif %}>
+                    {{ n }}/5
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-8">
+              <label for="comment" class="form-label mb-0">Commentaire</label>
+              <textarea name="comment" id="comment" rows="2"
+                        class="form-control form-control-sm"
+                        placeholder="Partagez votre avis...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button type="submit" class="btn btn-popcorn-primary w-100">
+                Enregistrer
+              </button>
+            </div>
+          </div>
+        </form>
+      {% else %}
+        <p class="text-muted">
+          <a href="{{ url_for('login') }}" class="link-light">Connectez-vous</a>
+          pour laisser un avis.
+        </p>
+      {% endif %}
+
+      {% if reviews %}
+        <div class="list-group list-group-flush">
+          {% for r in reviews %}
+            <div class="list-group-item bg-dark border-secondary">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <strong>{{ r.username }}</strong>
+                  <span class="ms-2 text-warning">{{ r.rating }}/5</span>
+                </div>
+                <small class="text-muted">
+                  {{ r.created_at }}
+                </small>
+              </div>
+              {% if r.comment %}
+                <p class="mb-0 mt-1">{{ r.comment }}</p>
+              {% endif %}
+            </div>
+          {% endfor %}
         </div>
-      {% endfor %}
+      {% endif %}
+
     </div>
-  {% endif %}
+  </div>
+
+  
 
 </div>
 
@@ -212,9 +212,9 @@
      aria-labelledby="ownFilmModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <form method="post"
-          action="{{ url_for('own_film', film_id=film.id) }}"
-          class="modal-content bg-dark text-light">
-      <div class="modal-header border-secondary">
+      action="{{ url_for('own_film', film_id=film.id) }}"
+      class="modal-content bg-dark text-light rounded-4 shadow-lg border-0">
+      <div class="modal-header border-0" style="background:#111;">
         <h5 class="modal-title" id="ownFilmModalLabel">
           Ajouter “{{ film.titre }}” à votre vidéothèque
         </h5>
@@ -225,7 +225,7 @@
       </div>
       <div class="modal-body">
 
-        <p class="small text-muted mb-3">
+        <p class="small text-light mb-3" style="opacity: .8;">
           Sélectionnez les formats que vous possédez et, si vous le souhaitez,
           indiquez un prix pour une location à d’autres utilisateurs.
         </p>
@@ -291,7 +291,7 @@
         </div>
 
       </div>
-      <div class="modal-footer border-secondary">
+      <div class="modal-footer border-0" style="background:#111;">
         <button type="button"
                 class="btn btn-outline-light"
                 data-bs-dismiss="modal">Annuler</button>

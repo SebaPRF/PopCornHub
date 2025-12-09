@@ -1,89 +1,100 @@
 {% extends "base.html" %}
 
-{% block title %}Exemplaires disponibles - {{ film.titre }}{% endblock %}
+{% block title %}Exemplaires disponibles — {{ film.titre }}{% endblock %}
 
 {% block content %}
 <div class="container my-4">
 
-  <h1 class="h3 mb-3">Exemplaires disponibles — {{ film.titre }}</h1>
-
-  <p class="text-muted mb-4">
-    Voici les utilisateurs qui possèdent ce film dans leur vidéothèque
-    et qui le proposent éventuellement à la location.
+  <h1 class="mb-2">Exemplaires disponibles — {{ film.titre }}</h1>
+  <p class="text-light mb-4" style="opacity:.8;">
+    Voici les utilisateurs qui possèdent ce film dans leur vidéothèque et qui le proposent éventuellement à la location.
   </p>
 
-  <!-- Filtres -->
-  <form method="get" class="row g-2 align-items-end mb-4">
-    <div class="col-sm-4 col-md-3">
+  <!-- FILTRES -->
+  <form method="get" class="row g-3 align-items-end mb-4">
+    <!-- Format -->
+    <div class="col-md-3">
       <label class="form-label">Format</label>
-      <select name="format" class="form-select form-select-sm">
-        <option value="all" {% if fmt == 'all' %}selected{% endif %}>Tous</option>
-        <option value="bluray" {% if fmt == 'bluray' %}selected{% endif %}>Blu-ray uniquement</option>
-        <option value="digital" {% if fmt == 'digital' %}selected{% endif %}>Digital uniquement</option>
+      <select name="format" class="form-select">
+        <option value="all"   {% if format_filter == 'all' %}selected{% endif %}>Tous</option>
+        <option value="bluray" {% if format_filter == 'bluray' %}selected{% endif %}>Blu-ray uniquement</option>
+        <option value="digital" {% if format_filter == 'digital' %}selected{% endif %}>Streaming uniquement</option>
+        <option value="both" {% if format_filter == 'both' %}selected{% endif %}>Blu-ray + Streaming</option>
       </select>
     </div>
-    <div class="col-sm-4 col-md-3">
-      <label class="form-label">Prix max (€)</label>
+
+    <!-- Prix max -->
+    <div class="col-md-3">
+      <label class="form-label">Prix max (&euro;)</label>
       <input type="text"
              name="max_price"
-             class="form-control form-control-sm"
+             class="form-control"
              placeholder="ex: 3.00"
-             value="{{ max_price }}">
+             value="{{ max_price or '' }}">
     </div>
-    <div class="col-sm-4 col-md-3">
-      <button type="submit" class="btn btn-popcorn-primary btn-sm w-100">
+
+    <!-- Tri -->
+    <div class="col-md-3">
+      <label class="form-label">Trier par</label>
+      <select name="sort_by" class="form-select">
+        <option value="price_asc"  {% if sort_by == 'price_asc' %}selected{% endif %}>Prix croissant</option>
+        <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Prix décroissant</option>
+        <option value="rating_desc" {% if sort_by == 'rating_desc' %}selected{% endif %}>Note vendeur décroissante</option>
+        <option value="rating_asc" {% if sort_by == 'rating_asc' %}selected{% endif %}>Note vendeur croissante</option>
+      </select>
+    </div>
+
+    <!-- Bouton -->
+    <div class="col-md-3 d-grid">
+      <button type="submit" class="btn btn-popcorn-primary mt-2 mt-md-0">
         Filtrer
       </button>
     </div>
   </form>
 
-  {% if owners %}
-    <div class="row g-3">
-      {% for o in owners %}
-        <div class="col-md-6 col-lg-4">
-          <div class="card bg-dark border-secondary h-100">
-            <div class="card-body">
-              <h5 class="card-title mb-2">{{ o.username }}</h5>
+  {% if entries %}
+    <div class="list-group">
+      {% for e in entries %}
+        <div class="list-group-item bg-dark border-secondary text-light">
 
-              <ul class="list-unstyled small mb-3">
-                {% if o.has_bluray %}
-                  <li>
-                    Blu-ray
-                    {% if o.bluray_price is not none %}
-                      — <span class="text-warning">{{ '%.2f'|format(o.bluray_price) }} €</span>
-                    {% endif %}
-                    {% if o.bluray_max_days %}
-                      — max {{ o.bluray_max_days }} jours
-                    {% endif %}
-                  </li>
-                {% endif %}
-                {% if o.has_digital %}
-                  <li>
-                    Digital / streaming
-                    {% if o.digital_price is not none %}
-                      — <span class="text-warning">{{ '%.2f'|format(o.digital_price) }} €</span>
-                    {% endif %}
-                    {% if o.digital_max_days %}
-                      — max {{ o.digital_max_days }} jours
-                    {% endif %}
-                  </li>
-                {% endif %}
-              </ul>
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <div>
+              <strong>{{ e.owner.username }}</strong>
 
-              <p class="text-muted small mb-2">
-                (La location réelle pourrait être gérée via le système de “rentals”.)
-              </p>
-
-              <button class="btn btn-outline-light btn-sm w-100" disabled>
-                Louer ce film (démo)
-              </button>
+              {% if e.seller_rating %}
+                <span class="ms-2 text-warning">
+                  {{ "%.1f"|format(e.seller_rating) }}/5
+                </span>
+              {% endif %}
             </div>
+
+            {% if e.min_price is not none %}
+              <span class="badge bg-warning text-dark">
+                à partir de {{ "%.2f"|format(e.min_price) }} &euro;
+              </span>
+            {% endif %}
           </div>
+
+          <div class="small mb-1">
+            {% if e.has_bluray %}
+              <span class="badge rounded-pill bg-secondary me-1">
+                Blu-ray — {{ "%.2f"|format(e.bluray_price) }} &euro;
+                {% if e.bluray_max_days %} ({{ e.bluray_max_days }} j max){% endif %}
+              </span>
+            {% endif %}
+            {% if e.has_digital %}
+              <span class="badge rounded-pill bg-secondary me-1">
+                Streaming — {{ "%.2f"|format(e.digital_price) }} &euro;
+                {% if e.digital_max_days %} ({{ e.digital_max_days }} j max){% endif %}
+              </span>
+            {% endif %}
+          </div>
+
         </div>
       {% endfor %}
     </div>
   {% else %}
-    <p class="text-muted">
+    <p class="text-light mt-4">
       Aucun exemplaire disponible pour le moment.
     </p>
   {% endif %}
