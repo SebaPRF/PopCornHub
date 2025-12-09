@@ -5,11 +5,14 @@
 {% block content %}
 <div class="container my-4">
 
+  <!-- HEADER FILM : AFFICHE + INFOS -->
   <div class="row g-4">
     <!-- Affiche -->
     <div class="col-md-4">
       {% if film.affiche_url %}
-        <img src="{{ film.affiche_url }}" alt="Affiche de {{ film.titre }}" class="img-fluid rounded shadow">
+        <img src="{{ film.affiche_url }}"
+             alt="Affiche de {{ film.titre }}"
+             class="img-fluid rounded shadow">
       {% else %}
         <div class="bg-secondary rounded d-flex align-items-center justify-content-center"
              style="height: 420px;">
@@ -21,6 +24,7 @@
     <!-- Infos film -->
     <div class="col-md-8">
       <h1 class="mb-2">{{ film.titre }}</h1>
+
       <p class="text-muted mb-2">
         {% if film.annee %}{{ film.annee }}{% endif %}
         {% if film.realisateur %} • Réalisateur : {{ film.realisateur }}{% endif %}
@@ -35,37 +39,8 @@
       {% endif %}
 
       {% if film.resume %}
-        <p class="mb-4">{{ film.resume }}</p>
+        <p class="mb-3">{{ film.resume }}</p>
       {% endif %}
-
-      <!-- Boutons principaux -->
-      <div class="d-flex flex-wrap gap-2 mb-4">
-        <!-- Ajouter à ma vidéothèque -->
-        <button class="btn btn-warning fw-semibold"
-                data-bs-toggle="modal"
-                data-bs-target="#ownFilmModal">
-          Ajouter à ma vidéothèque
-        </button>
-
-        <!-- Voir les exemplaires disponibles -->
-        <a href="{{ url_for('film_availability', film_id=film.id) }}"
-           class="btn btn-outline-light">
-          Voir les exemplaires disponibles
-          {% if owners_count and owners_count > 0 %}
-            <span class="badge bg-success ms-1">{{ owners_count }}</span>
-          {% endif %}
-        </a>
-
-        {% if trailer_key %}
-          <!-- Bande-annonce en popup (modal) -->
-          <button type="button"
-                  class="btn btn-outline-danger"
-                  data-bs-toggle="modal"
-                  data-bs-target="#trailerModal">
-            Voir la bande-annonce
-          </button>
-        {% endif %}
-      </div>
 
       <!-- Bloc note moyenne -->
       <div class="mb-3">
@@ -83,37 +58,68 @@
 
   <hr class="my-4">
 
-  <!-- Distribution (acteurs) -->
+  <!-- DISTRIBUTION (ACTEURS) - style “chips” comme avant -->
   <h2 class="h4 mb-3">Distribution</h2>
-  <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-3 mb-4">
+
+  <div class="d-flex flex-wrap gap-2 mb-4">
     {% for actor in actors %}
-      <div class="col">
-        <div class="card bg-dark border-0 h-100">
-          <div class="ratio ratio-2x3">
-            <img src="{{ actor.image_url }}"
-                 class="card-img-top"
-                 alt="{{ actor.name }}">
-          </div>
-          <div class="card-body p-2">
-            <p class="card-title mb-0 small text-center">
-              <a href="{{ url_for('actor_films', actor_name=actor.name) }}"
-                 class="link-light text-decoration-none">
-                {{ actor.name }}
-              </a>
-            </p>
-          </div>
-        </div>
-      </div>
+      <a href="{{ url_for('actor_films', actor_name=actor.name) }}"
+         class="btn btn-outline-light btn-sm d-flex align-items-center rounded-pill"
+         style="background-color:#111;">
+        <span class="rounded-circle overflow-hidden me-2"
+              style="width:32px;height:32px;">
+          <img src="{{ actor.image_url }}"
+               alt="{{ actor.name }}"
+               class="w-100 h-100"
+               style="object-fit:cover;">
+        </span>
+        <span class="small">{{ actor.name }}</span>
+      </a>
     {% endfor %}
   </div>
 
   <hr class="my-4">
 
-  <!-- Avis utilisateurs -->
+  <!-- LOCATION : nouveaux boutons -->
+  <h2 class="h4 mb-3">Location</h2>
+
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    <!-- Ajouter à ma vidéothèque -->
+    <button class="btn btn-warning fw-semibold"
+            data-bs-toggle="modal"
+            data-bs-target="#ownFilmModal">
+      Ajouter à ma vidéothèque
+    </button>
+
+    <!-- Voir les exemplaires disponibles -->
+    <a href="{{ url_for('film_availability', film_id=film.id) }}"
+       class="btn btn-outline-light">
+      Voir les exemplaires disponibles
+      {% if owners_count and owners_count > 0 %}
+        <span class="badge bg-success ms-1">{{ owners_count }}</span>
+      {% endif %}
+    </a>
+
+    {% if trailer_key %}
+      <!-- Bande-annonce en popup (modal) -->
+      <button type="button"
+              class="btn btn-outline-danger"
+              data-bs-toggle="modal"
+              data-bs-target="#trailerModal">
+        Voir la bande-annonce
+      </button>
+    {% endif %}
+  </div>
+
+  <hr class="my-4">
+
+  <!-- AVIS UTILISATEURS -->
   <h2 class="h4 mb-3">Avis des utilisateurs</h2>
 
   {% if session.get('user_id') %}
-    <form action="{{ url_for('add_or_update_review', film_id=film.id) }}" method="post" class="mb-4">
+    <form action="{{ url_for('add_or_update_review', film_id=film.id) }}"
+          method="post"
+          class="mb-4">
       <div class="row g-2 align-items-center">
         <div class="col-md-2">
           <label for="rating" class="form-label mb-0">Votre note</label>
@@ -141,7 +147,8 @@
     </form>
   {% else %}
     <p class="text-muted">
-      <a href="{{ url_for('login') }}" class="link-light">Connectez-vous</a> pour laisser un avis.
+      <a href="{{ url_for('login') }}" class="link-light">Connectez-vous</a>
+      pour laisser un avis.
     </p>
   {% endif %}
 
@@ -170,14 +177,18 @@
 
 {% if trailer_key %}
 <!-- MODAL : Bande-annonce -->
-<div class="modal fade" id="trailerModal" tabindex="-1" aria-labelledby="trailerModalLabel" aria-hidden="true">
+<div class="modal fade" id="trailerModal" tabindex="-1"
+     aria-labelledby="trailerModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content bg-dark border-secondary">
       <div class="modal-header border-secondary">
         <h5 class="modal-title" id="trailerModalLabel">
           Bande-annonce – {{ film.titre }}
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        <button type="button"
+                class="btn-close btn-close-white"
+                data-bs-dismiss="modal"
+                aria-label="Fermer"></button>
       </div>
       <div class="modal-body p-0">
         <div class="ratio ratio-16x9">
@@ -197,14 +208,20 @@
 {% endif %}
 
 <!-- MODAL : Ajouter à ma vidéothèque -->
-<div class="modal fade" id="ownFilmModal" tabindex="-1" aria-labelledby="ownFilmModalLabel" aria-hidden="true">
+<div class="modal fade" id="ownFilmModal" tabindex="-1"
+     aria-labelledby="ownFilmModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <form method="post" action="{{ url_for('own_film', film_id=film.id) }}" class="modal-content bg-dark text-light">
+    <form method="post"
+          action="{{ url_for('own_film', film_id=film.id) }}"
+          class="modal-content bg-dark text-light">
       <div class="modal-header border-secondary">
         <h5 class="modal-title" id="ownFilmModalLabel">
           Ajouter “{{ film.titre }}” à votre vidéothèque
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        <button type="button"
+                class="btn-close btn-close-white"
+                data-bs-dismiss="modal"
+                aria-label="Fermer"></button>
       </div>
       <div class="modal-body">
 
@@ -214,7 +231,11 @@
         </p>
 
         <div class="form-check mb-2">
-          <input class="form-check-input" type="checkbox" value="1" id="ownBluray" name="has_bluray"
+          <input class="form-check-input"
+                 type="checkbox"
+                 value="1"
+                 id="ownBluray"
+                 name="has_bluray"
                  {% if ownership_for_user and ownership_for_user.has_bluray %}checked{% endif %}>
           <label class="form-check-label" for="ownBluray">
             Blu-ray (physique)
@@ -240,7 +261,11 @@
         </div>
 
         <div class="form-check mb-2">
-          <input class="form-check-input" type="checkbox" value="1" id="ownDigital" name="has_digital"
+          <input class="form-check-input"
+                 type="checkbox"
+                 value="1"
+                 id="ownDigital"
+                 name="has_digital"
                  {% if ownership_for_user and ownership_for_user.has_digital %}checked{% endif %}>
           <label class="form-check-label" for="ownDigital">
             Version digitale / streaming
@@ -267,8 +292,11 @@
 
       </div>
       <div class="modal-footer border-secondary">
-        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Annuler</button>
-        <button type="submit" class="btn btn-warning fw-semibold">
+        <button type="button"
+                class="btn btn-outline-light"
+                data-bs-dismiss="modal">Annuler</button>
+        <button type="submit"
+                class="btn btn-warning fw-semibold">
           Enregistrer
         </button>
       </div>

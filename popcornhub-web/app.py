@@ -83,12 +83,10 @@ def find_ownership(data, user_id, movie_id):
 
 
 def tmdb_get(path, params=None):
-    """
-    Appel générique à TMDb : GET /path?api_key=...
-    """
     url = f"{TMDB_BASE_URL}{path}"
     params = params or {}
     params["api_key"] = TMDB_API_KEY
+    params.setdefault("language", "fr-FR")
     r = requests.get(url, params=params, timeout=5)
     r.raise_for_status()
     return r.json()
