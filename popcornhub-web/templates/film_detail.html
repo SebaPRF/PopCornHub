@@ -1,257 +1,249 @@
 {% extends "base.html" %}
 
+{% block title %}{{ film.titre }} - PopCornHub{% endblock %}
+
 {% block content %}
-<div class="container py-4">
+<div class="container my-4">
 
   <div class="row g-4">
     <!-- Affiche -->
-    <div class="col-md-4 position-relative">
-
+    <div class="col-md-4">
       {% if film.affiche_url %}
-        <img src="{{ film.affiche_url }}"
-             alt="{{ film.titre }}"
-             class="img-fluid rounded shadow w-100">
+        <img src="{{ film.affiche_url }}" alt="Affiche de {{ film.titre }}" class="img-fluid rounded shadow">
       {% else %}
-        <img src="{{ url_for('static', filename='default_poster.png') }}"
-             alt="{{ film.titre }}"
-             class="img-fluid rounded shadow w-100">
+        <div class="bg-secondary rounded d-flex align-items-center justify-content-center"
+             style="height: 420px;">
+          <span class="text-light">Affiche indisponible</span>
+        </div>
       {% endif %}
-
     </div>
 
     <!-- Infos film -->
     <div class="col-md-8">
-
-      <!-- Titre + icônes -->
-      <div class="d-flex align-items-center justify-content-between gap-3 mb-2">
-
-        <h1 class="page-title mb-0">{{ film.titre }}</h1>
-
-        <!-- Icônes pour utilisateurs non-admin -->
-        {% if session.get('user_id') and not session.get('is_admin') %}
-        <div class="d-flex align-items-center gap-3">
-
-          <!-- PIN -->
-          <form
-            action="{% if in_library %}{{ url_for('remove_from_library', film_id=film.id) }}{% else %}{{ url_for('add_to_library', film_id=film.id) }}{% endif %}"
-            method="post">
-            <button type="submit"
-                    class="pin-btn {% if in_library %}is-in-list{% endif %}"
-                    title="{% if in_library %}Retirer de ma liste{% else %}Ajouter à ma liste{% endif %}">
-              <span class="pin-icon" style="font-size:2rem;">📌</span>
-            </button>
-          </form>
-
-          <!-- COEUR -->
-          <form action="{{ url_for('toggle_favorite', film_id=film.id) }}"
-                method="post">
-            <button type="submit"
-                    class="favorite-btn {% if is_favorite %}is-favorite{% endif %}"
-                    title="{% if is_favorite %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}">
-              <span class="favorite-icon" style="font-size:2rem;">❤</span>
-            </button>
-          </form>
-
-        </div>
-        {% endif %}
-
-        <!-- Boutons admin -->
-        {% if session.get('is_admin') %}
-        <div class="d-flex gap-2">
-          <a href="{{ url_for('film_edit', film_id=film.id) }}"
-             class="btn btn-popcorn-primary btn-sm">Modifier</a>
-             <form action="{{ url_for('film_delete', film_id=film.id) }}"
-             method="post"
-             onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce film ?');">
-         <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
-       </form>
-        </div>
-        {% endif %}
-
-      </div>
-
-      <!-- Résumé -->
-      <p class="mb-3">{{ film.resume }}</p>
-
-      <!-- Infos techniques -->
-      <p class="mb-1">
-        <strong>Année :</strong> {{ film.annee }}
-        {% if film.realisateur %}
-          • <strong>Réalisateur :</strong> {{ film.realisateur }}
-        {% endif %}
-        {% if film.duree %}
-          • <strong>Durée :</strong> {{ film.duree }} min
-        {% endif %}
+      <h1 class="mb-2">{{ film.titre }}</h1>
+      <p class="text-muted mb-2">
+        {% if film.annee %}{{ film.annee }}{% endif %}
+        {% if film.realisateur %} • Réalisateur : {{ film.realisateur }}{% endif %}
       </p>
 
       {% if film.genres %}
-        <p class="mb-2"><strong>Genres :</strong></p>
-        <div class="mb-3">
-          {% for genre in film.genres %}
-            <span class="badge bg-warning text-dark me-1 mb-1">{{ genre }}</span>
+        <p class="mb-3">
+          {% for g in film.genres %}
+            <span class="badge rounded-pill bg-warning text-dark me-1 mb-1">{{ g }}</span>
           {% endfor %}
-        </div>
+        </p>
       {% endif %}
 
-      <!-- Notes -->
-      <div class="mb-4">
-        {% if avg_rating %}
-          <p class="mb-1">
-            ⭐ <strong>{{ avg_rating }}/5</strong>
-            ({{ reviews_count }} avis)
-          </p>
-        {% elif reviews_count == 0 %}
-          <p class="opacity-75">Aucun avis pour le moment.</p>
-        {% endif %}
-      </div>
+      {% if film.resume %}
+        <p class="mb-4">{{ film.resume }}</p>
+      {% endif %}
 
-      <!-- CASTING -->
-      <hr class="my-4">
-      <h3 class="mb-3">Distribution</h3>
+      <!-- Boutons principaux -->
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        <!-- Ajouter à ma vidéothèque -->
+        <button class="btn btn-warning fw-semibold"
+                data-bs-toggle="modal"
+                data-bs-target="#ownFilmModal">
+          Ajouter à ma vidéothèque
+        </button>
 
-      <div class="d-flex flex-wrap gap-3 mb-2">
-        {% for actor in actors %}
-          <a href="{{ url_for('actor_films', actor_name=actor.name) }}"
-             class="actor-pill text-decoration-none">
-            <img src="{{ actor.image_url }}"
-                 alt="{{ actor.name }}"
-                 class="actor-avatar-small">
-            <span class="actor-pill-name">{{ actor.name }}</span>
-          </a>
-        {% endfor %}
-      </div>
-
-      <!-- Location + Trailer -->
-      <hr class="my-4">
-      <div class="d-flex align-items-center justify-content-between">
-        <h3 class="mb-3">Location</h3>
+        <!-- Voir les exemplaires disponibles -->
+        <a href="{{ url_for('film_availability', film_id=film.id) }}"
+           class="btn btn-outline-light">
+          Voir les exemplaires disponibles
+          {% if owners_count and owners_count > 0 %}
+            <span class="badge bg-success ms-1">{{ owners_count }}</span>
+          {% endif %}
+        </a>
 
         {% if trailer_key %}
-        <button type="button"
-                class="btn btn-popcorn-secondary btn-sm"
-                data-bs-toggle="modal"
-                data-bs-target="#trailerModal">
-          Voir le trailer
-        </button>
+          <a href="https://www.youtube.com/watch?v={{ trailer_key }}"
+             target="_blank"
+             class="btn btn-outline-danger">
+            Voir la bande-annonce
+          </a>
         {% endif %}
       </div>
 
-      {% if session.get('user_id') %}
-        {% if is_rented %}
-          <p class="mb-2">
-            🎟️ Ce film est loué jusqu’au
-            <strong>{{ rental_expires_at.strftime('%d/%m/%Y %H:%M') }}</strong>.
-          </p>
-          <a href="{{ url_for('watch_film', film_id=film.id) }}"
-             class="btn btn-popcorn-primary btn-lg">Regarder maintenant</a>
+      <!-- Bloc note moyenne -->
+      <div class="mb-3">
+        {% if avg_rating %}
+          <span class="fw-semibold">Note moyenne :</span>
+          <span class="text-warning">{{ avg_rating }}/5</span>
+          <span class="text-muted">({{ reviews_count }} avis)</span>
         {% else %}
-          <form action="{{ url_for('rent_film', film_id=film.id) }}" method="post">
-            <button type="submit"
-                    class="btn btn-popcorn-primary btn-lg">
-              Louer ce film (3 jours – 3,99 €)
-            </button>
-          </form>
+          <span class="text-muted">Aucun avis pour le moment.</span>
         {% endif %}
-      {% else %}
-        <p class="mb-2">Connectez-vous pour louer ce film.</p>
-        <a href="{{ url_for('login') }}"
-           class="btn btn-outline-popcorn">Se connecter</a>
-      {% endif %}
+      </div>
 
-      <!-- Avis -->
-      <hr class="my-4">
-      <h3 class="mb-3">Avis des utilisateurs</h3>
+    </div>
+  </div>
 
-      {% if reviews %}
-        <div class="mb-4">
-          {% for review in reviews %}
-            <div class="mb-3 p-3 rounded" style="background-color:#151515;">
-              <div class="d-flex justify-content-between mb-1">
-                <strong>{{ review.username }}</strong>
-                <span>⭐ {{ review.rating }}/5</span>
-              </div>
-              {% if review.comment %}
-                <p class="mb-0">{{ review.comment }}</p>
-              {% endif %}
+  <hr class="my-4">
+
+  <!-- Distribution (acteurs) -->
+  <h2 class="h4 mb-3">Distribution</h2>
+  <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-3 mb-4">
+    {% for actor in actors %}
+      <div class="col">
+        <div class="card bg-dark border-0 h-100">
+          <div class="ratio ratio-2x3">
+            <img src="{{ actor.image_url }}"
+                 class="card-img-top"
+                 alt="{{ actor.name }}">
+          </div>
+          <div class="card-body p-2">
+            <p class="card-title mb-0 small text-center">
+              <a href="{{ url_for('actor_films', actor_name=actor.name) }}"
+                 class="link-light text-decoration-none">
+                {{ actor.name }}
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <hr class="my-4">
+
+  <!-- Avis utilisateurs -->
+  <h2 class="h4 mb-3">Avis des utilisateurs</h2>
+
+  {% if session.get('user_id') %}
+    <form action="{{ url_for('add_or_update_review', film_id=film.id) }}" method="post" class="mb-4">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-2">
+          <label for="rating" class="form-label mb-0">Votre note</label>
+          <select name="rating" id="rating" class="form-select form-select-sm">
+            {% for n in range(1,6) %}
+              <option value="{{ n }}"
+                      {% if user_review and user_review.rating == n %}selected{% endif %}>
+                {{ n }}/5
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-8">
+          <label for="comment" class="form-label mb-0">Commentaire</label>
+          <textarea name="comment" id="comment" rows="2"
+                    class="form-control form-control-sm"
+                    placeholder="Partagez votre avis...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-popcorn-primary w-100">
+            Enregistrer
+          </button>
+        </div>
+      </div>
+    </form>
+  {% else %}
+    <p class="text-muted">
+      <a href="{{ url_for('login') }}" class="link-light">Connectez-vous</a> pour laisser un avis.
+    </p>
+  {% endif %}
+
+  {% if reviews %}
+    <div class="list-group list-group-flush">
+      {% for r in reviews %}
+        <div class="list-group-item bg-dark border-secondary">
+          <div class="d-flex justify-content-between">
+            <div>
+              <strong>{{ r.username }}</strong>
+              <span class="ms-2 text-warning">{{ r.rating }}/5</span>
             </div>
-          {% endfor %}
+            <small class="text-muted">
+              {{ r.created_at }}
+            </small>
+          </div>
+          {% if r.comment %}
+            <p class="mb-0 mt-1">{{ r.comment }}</p>
+          {% endif %}
         </div>
-      {% else %}
-        <p class="opacity-75">Pas encore d’avis.</p>
-      {% endif %}
-
-      {% if session.get('user_id') and not session.get('is_admin') %}
-        <hr class="my-3">
-        <h4 class="mb-3">Donner mon avis</h4>
-        <form action="{{ url_for('add_or_update_review', film_id=film.id) }}"
-              method="post"
-              class="row g-3">
-
-          <div class="col-sm-3">
-            <label class="form-label">Note</label>
-            <select name="rating" class="form-select">
-              {% for n in range(1,6) %}
-                <option value="{{ n }}"
-                        {% if user_review and user_review.rating == n %}selected{% endif %}>
-                  {{ n }} / 5
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <div class="col-sm-9">
-            <label class="form-label">Commentaire (optionnel)</label>
-            <textarea name="comment"
-                      rows="2"
-                      class="form-control"
-                      placeholder="Votre avis...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
-          </div>
-
-          <div class="col-12">
-            <button type="submit" class="btn btn-popcorn-primary">Enregistrer</button>
-          </div>
-
-        </form>
-      {% endif %}
-
+      {% endfor %}
     </div>
-  </div>
+  {% endif %}
+
 </div>
 
-<!-- Trailer Modal -->
-{% if trailer_key %}
-<div class="modal fade" id="trailerModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content" style="background-color:#000;">
-      <div class="modal-header border-0">
-        <h5 class="modal-title">Trailer – {{ film.titre }}</h5>
-        <button type="button" class="btn-close btn-close-white"
-                data-bs-dismiss="modal"></button>
+<!-- MODAL : Ajouter à ma vidéothèque -->
+<div class="modal fade" id="ownFilmModal" tabindex="-1" aria-labelledby="ownFilmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form method="post" action="{{ url_for('own_film', film_id=film.id) }}" class="modal-content bg-dark text-light">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title" id="ownFilmModalLabel">
+          Ajouter “{{ film.titre }}” à votre vidéothèque
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
-      <div class="modal-body pt-0">
-        <div class="ratio ratio-16x9">
-          <iframe id="trailerFrame"
-                  src=""
-                  allow="autoplay; encrypted-media"
-                  allowfullscreen></iframe>
+      <div class="modal-body">
+
+        <p class="small text-muted mb-3">
+          Sélectionnez les formats que vous possédez et, si vous le souhaitez,
+          indiquez un prix pour une location à d’autres utilisateurs.
+        </p>
+
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" value="1" id="ownBluray" name="has_bluray"
+                 {% if ownership_for_user and ownership_for_user.has_bluray %}checked{% endif %}>
+          <label class="form-check-label" for="ownBluray">
+            Blu-ray (physique)
+          </label>
         </div>
+        <div class="row mb-3 ps-3">
+          <div class="col-6">
+            <label class="form-label form-label-sm">Prix location Blu-ray (€)</label>
+            <input type="text"
+                   name="bluray_price"
+                   class="form-control form-control-sm"
+                   placeholder="ex: 2.50"
+                   value="{% if ownership_for_user and ownership_for_user.bluray_price is not none %}{{ ownership_for_user.bluray_price }}{% endif %}">
+          </div>
+          <div class="col-6">
+            <label class="form-label form-label-sm">Durée max (jours)</label>
+            <input type="number"
+                   name="bluray_max_days"
+                   min="1"
+                   class="form-control form-control-sm"
+                   value="{% if ownership_for_user and ownership_for_user.bluray_max_days %}{{ ownership_for_user.bluray_max_days }}{% endif %}">
+          </div>
+        </div>
+
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" value="1" id="ownDigital" name="has_digital"
+                 {% if ownership_for_user and ownership_for_user.has_digital %}checked{% endif %}>
+          <label class="form-check-label" for="ownDigital">
+            Version digitale / streaming
+          </label>
+        </div>
+        <div class="row mb-2 ps-3">
+          <div class="col-6">
+            <label class="form-label form-label-sm">Prix location Digital (€)</label>
+            <input type="text"
+                   name="digital_price"
+                   class="form-control form-control-sm"
+                   placeholder="ex: 1.99"
+                   value="{% if ownership_for_user and ownership_for_user.digital_price is not none %}{{ ownership_for_user.digital_price }}{% endif %}">
+          </div>
+          <div class="col-6">
+            <label class="form-label form-label-sm">Durée max (jours)</label>
+            <input type="number"
+                   name="digital_max_days"
+                   min="1"
+                   class="form-control form-control-sm"
+                   value="{% if ownership_for_user and ownership_for_user.digital_max_days %}{{ ownership_for_user.digital_max_days }}{% endif %}">
+          </div>
+        </div>
+
       </div>
-    </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-warning fw-semibold">
+          Enregistrer
+        </button>
+      </div>
+    </form>
   </div>
 </div>
-
-<script>
-const modal = document.getElementById('trailerModal');
-if (modal) {
-  modal.addEventListener('show.bs.modal', () => {
-    document.getElementById('trailerFrame').src =
-      "https://www.youtube.com/embed/{{ trailer_key }}?autoplay=1&hl=fr";
-  });
-  modal.addEventListener('hidden.bs.modal', () => {
-    document.getElementById('trailerFrame').src = "";
-  });
-}
-</script>
-{% endif %}
 
 {% endblock %}

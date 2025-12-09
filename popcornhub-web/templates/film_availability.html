@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Exemplaires disponibles - {{ film.titre }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+
+  <h1 class="h3 mb-3">Exemplaires disponibles — {{ film.titre }}</h1>
+
+  <p class="text-muted mb-4">
+    Voici les utilisateurs qui possèdent ce film dans leur vidéothèque
+    et qui le proposent éventuellement à la location.
+  </p>
+
+  <!-- Filtres -->
+  <form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-sm-4 col-md-3">
+      <label class="form-label">Format</label>
+      <select name="format" class="form-select form-select-sm">
+        <option value="all" {% if fmt == 'all' %}selected{% endif %}>Tous</option>
+        <option value="bluray" {% if fmt == 'bluray' %}selected{% endif %}>Blu-ray uniquement</option>
+        <option value="digital" {% if fmt == 'digital' %}selected{% endif %}>Digital uniquement</option>
+      </select>
+    </div>
+    <div class="col-sm-4 col-md-3">
+      <label class="form-label">Prix max (€)</label>
+      <input type="text"
+             name="max_price"
+             class="form-control form-control-sm"
+             placeholder="ex: 3.00"
+             value="{{ max_price }}">
+    </div>
+    <div class="col-sm-4 col-md-3">
+      <button type="submit" class="btn btn-popcorn-primary btn-sm w-100">
+        Filtrer
+      </button>
+    </div>
+  </form>
+
+  {% if owners %}
+    <div class="row g-3">
+      {% for o in owners %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card bg-dark border-secondary h-100">
+            <div class="card-body">
+              <h5 class="card-title mb-2">{{ o.username }}</h5>
+
+              <ul class="list-unstyled small mb-3">
+                {% if o.has_bluray %}
+                  <li>
+                    Blu-ray
+                    {% if o.bluray_price is not none %}
+                      — <span class="text-warning">{{ '%.2f'|format(o.bluray_price) }} €</span>
+                    {% endif %}
+                    {% if o.bluray_max_days %}
+                      — max {{ o.bluray_max_days }} jours
+                    {% endif %}
+                  </li>
+                {% endif %}
+                {% if o.has_digital %}
+                  <li>
+                    Digital / streaming
+                    {% if o.digital_price is not none %}
+                      — <span class="text-warning">{{ '%.2f'|format(o.digital_price) }} €</span>
+                    {% endif %}
+                    {% if o.digital_max_days %}
+                      — max {{ o.digital_max_days }} jours
+                    {% endif %}
+                  </li>
+                {% endif %}
+              </ul>
+
+              <p class="text-muted small mb-2">
+                (La location réelle pourrait être gérée via le système de “rentals”.)
+              </p>
+
+              <button class="btn btn-outline-light btn-sm w-100" disabled>
+                Louer ce film (démo)
+              </button>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">
+      Aucun exemplaire disponible pour le moment.
+    </p>
+  {% endif %}
+
+</div>
+{% endblock %}

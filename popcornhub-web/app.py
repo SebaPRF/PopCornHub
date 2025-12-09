@@ -64,6 +64,20 @@ def get_user_by_id(data, user_id):
             return u
     return None
 
+def get_user_by_id(data, user_id):
+    for u in data["users"]:
+        if u["id"] == user_id:
+            return u
+    return None
+
+
+def find_ownership(data, user_id, movie_id):
+    """Retourne l'enregistrement 'user_owns' pour un user/film ou None."""
+    for own in data.get("user_owns", []):
+        if own["user_id"] == user_id and own["movie_id"] == movie_id:
+            return own
+    return None
+
 
 # ---------- Helpers TMDb ----------
 
@@ -527,6 +541,19 @@ def film_detail(film_id):
                     rental_expires_at = expires
                 break
 
+    # ----- exemplaires possédés par les utilisateurs -----
+    ownership_for_user = None
+    owners_count = 0
+
+    if session.get("user_id"):
+        ownership_for_user = find_ownership(data, session["user_id"], film_id)
+
+    owners_for_film = [
+        o for o in data.get("user_owns", [])
+        if o["movie_id"] == film_id
+    ]
+    owners_count = len(owners_for_film)
+
     # ----- trailer YouTube via TMDb (recherche par titre/année) -----
     trailer_key = None
     try:
@@ -547,8 +574,137 @@ def film_detail(film_id):
         is_rented=is_rented,
         rental_expires_at=rental_expires_at,
         trailer_key=trailer_key,
+        ownership_for_user=ownership_for_user,
+        owners_count=owners_count,
     )
 
+@app.post("/films/<int:film_id>/own")
+@login_required
+def own_film(film_id):
+    """Déclare que l'utilisateur possède ce film (bluray / digital) + prix."""
+    data = load_data()
+    user_id = session["user_id"]
+
+    has_bluray = bool(request.form.get("has_bluray"))
+    has_digital = bool(request.form.get("has_digital"))
+
+    if not has_bluray and not has_digital:
+        flash("Veuillez choisir au moins un format (Blu-ray ou Digital).", "warning")
+        return redirect(url_for("film_detail", film_id=film_id))
+
+    def parse_float(field):
+        raw = request.form.get(field, "").strip()
+        if not raw:
+            return None
+        try:
+            return float(raw.replace(",", "."))
+        except ValueError:
+            return None
+
+    bluray_price = parse_float("bluray_price") if has_bluray else None
+    digital_price = parse_float("digital_price") if has_digital else None
+
+    def parse_int(field):
+        raw = request.form.get(field, "").strip()
+        if not raw:
+            return None
+        try:
+            return int(raw)
+        except ValueError:
+            return None
+
+    bluray_max_days = parse_int("bluray_max_days") if has_bluray else None
+    digital_max_days = parse_int("digital_max_days") if has_digital else None
+
+    existing = find_ownership(data, user_id, film_id)
+    if existing:
+        existing["has_bluray"] = has_bluray
+        existing["has_digital"] = has_digital
+        existing["bluray_price"] = bluray_price
+        existing["digital_price"] = digital_price
+        existing["bluray_max_days"] = bluray_max_days
+        existing["digital_max_days"] = digital_max_days
+    else:
+        data.setdefault("user_owns", []).append(
+            {
+                "user_id": user_id,
+                "movie_id": film_id,
+                "has_bluray": has_bluray,
+                "has_digital": has_digital,
+                "bluray_price": bluray_price,
+                "digital_price": digital_price,
+                "bluray_max_days": bluray_max_days,
+                "digital_max_days": digital_max_days,
+            }
+        )
+
+    save_data(data)
+    flash("Le film a été ajouté à votre vidéothèque.", "success")
+    return redirect(url_for("film_detail", film_id=film_id))
+
+@app.get("/films/<int:film_id>/availability")
+@login_required
+def film_availability(film_id):
+    """Affiche les utilisateurs qui possèdent ce film + filtres."""
+    data = load_data()
+
+    # Info film
+    movie = tmdb_get(f"/movie/{film_id}")
+    film = tmdb_movie_to_film(movie)
+
+    fmt = request.args.get("format", "all")  # 'all', 'bluray', 'digital'
+    max_price = request.args.get("max_price", "").strip()
+    try:
+        max_price_val = float(max_price.replace(",", ".")) if max_price else None
+    except ValueError:
+        max_price_val = None
+
+    owners = []
+    users_by_id = {u["id"]: u for u in data["users"]}
+
+    for own in data.get("user_owns", []):
+        if own["movie_id"] != film_id:
+            continue
+        if own["user_id"] == session["user_id"]:
+            continue
+
+        if fmt == "bluray" and not own.get("has_bluray"):
+            continue
+        if fmt == "digital" and not own.get("has_digital"):
+            continue
+
+        prices = []
+        if own.get("has_bluray") and own.get("bluray_price") is not None:
+            prices.append(own["bluray_price"])
+        if own.get("has_digital") and own.get("digital_price") is not None:
+            prices.append(own["digital_price"])
+        min_price = min(prices) if prices else None
+
+        if max_price_val is not None and min_price is not None and min_price > max_price_val:
+            continue
+
+        user = users_by_id.get(own["user_id"])
+        username = user["username"] if user else f"Utilisateur #{own['user_id']}"
+
+        owners.append(
+            {
+                "username": username,
+                "has_bluray": own.get("has_bluray", False),
+                "has_digital": own.get("has_digital", False),
+                "bluray_price": own.get("bluray_price"),
+                "digital_price": own.get("digital_price"),
+                "bluray_max_days": own.get("bluray_max_days"),
+                "digital_max_days": own.get("digital_max_days"),
+            }
+        )
+
+    return render_template(
+        "film_availability.html",
+        film=film,
+        owners=owners,
+        fmt=fmt,
+        max_price=max_price,
+    )
 
 # ---------- Favoris (❤️) ----------
 
