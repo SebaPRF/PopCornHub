@@ -57,11 +57,13 @@
         </a>
 
         {% if trailer_key %}
-          <a href="https://www.youtube.com/watch?v={{ trailer_key }}"
-             target="_blank"
-             class="btn btn-outline-danger">
+          <!-- Bande-annonce en popup (modal) -->
+          <button type="button"
+                  class="btn btn-outline-danger"
+                  data-bs-toggle="modal"
+                  data-bs-target="#trailerModal">
             Voir la bande-annonce
-          </a>
+          </button>
         {% endif %}
       </div>
 
@@ -166,6 +168,34 @@
 
 </div>
 
+{% if trailer_key %}
+<!-- MODAL : Bande-annonce -->
+<div class="modal fade" id="trailerModal" tabindex="-1" aria-labelledby="trailerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content bg-dark border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title" id="trailerModalLabel">
+          Bande-annonce – {{ film.titre }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="ratio ratio-16x9">
+          <!-- src vide au départ, rempli au moment de l'ouverture -->
+          <iframe id="trailerIframe"
+                  src=""
+                  data-src="https://www.youtube.com/embed/{{ trailer_key }}?rel=0&autoplay=1"
+                  title="Bande-annonce {{ film.titre }}"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <!-- MODAL : Ajouter à ma vidéothèque -->
 <div class="modal fade" id="ownFilmModal" tabindex="-1" aria-labelledby="ownFilmModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -246,4 +276,31 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {% if trailer_key %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var modalEl = document.getElementById('trailerModal');
+      if (!modalEl) return;
+
+      var iframe = document.getElementById('trailerIframe');
+      if (!iframe) return;
+
+      var videoSrc = iframe.getAttribute('data-src');
+
+      // Quand on ouvre la modal : on charge la vidéo avec autoplay
+      modalEl.addEventListener('shown.bs.modal', function () {
+        iframe.setAttribute('src', videoSrc);
+      });
+
+      // Quand on ferme : on vide la source pour arrêter le son
+      modalEl.addEventListener('hidden.bs.modal', function () {
+        iframe.setAttribute('src', '');
+      });
+    });
+  </script>
+  {% endif %}
 {% endblock %}
