@@ -8,6 +8,7 @@ from flask import (
     session,
     flash,
 )
+
 import os
 
 API_URL = os.getenv("API_URL", "http://10.11.37.1:5000")
@@ -64,13 +65,6 @@ def get_user_by_id(data, user_id):
         if u["id"] == user_id:
             return u
     return None
-
-def get_user_by_id(data, user_id):
-    for u in data["users"]:
-        if u["id"] == user_id:
-            return u
-    return None
-
 
 def find_ownership(data, user_id, movie_id):
     """Retourne l'enregistrement 'user_owns' pour un user/film ou None."""
@@ -308,55 +302,129 @@ def logout():
     flash("Vous êtes maintenant déconnecté(e).", "info")
     return redirect(url_for("index"))
 
-# ---------- Page profil (favoris + liste + locations) ----------
 
-@app.route("/profile")
-@login_required
-def profile():
+# ---------- Page profil (vidéothèque + locations) ----------
+
+def _build_profile_context():
     data = load_data()
     user_id = session["user_id"]
-    user_id_str = str(user_id)
 
-    active_tab = request.args.get("tab", "favorites")
+    # 1) Infos utilisateur
+    user = get_user_by_id(data, user_id)
 
-    fav_ids = data["favorites"].get(user_id_str, [])
-    lib_ids = data["library"].get(user_id_str, [])
+    # 2) Récupérer tous les exemplaires que l'utilisateur possède via user_owns
+    ownerships = [
+        own for own in data.get("user_owns", [])
+        if own.get("user_id") == user_id
+    ]
 
-    def fetch_film_from_tmdb(tmdb_id):
-        movie = tmdb_get(f"/movie/{tmdb_id}")
-        return tmdb_movie_to_film(movie)
+    # 2b) Compatibilité avec l'ancienne logique "library" (📌)
+    # Si des films sont encore stockés dans data["library"][str(user_id)],
+    # on les ajoute comme entrées "virtuelles" dans ownerships pour qu'ils
+    # apparaissent quand même dans "Ma vidéothèque".
+    uid_str = str(user_id)
+    legacy_ids = data.get("library", {}).get(uid_str, [])
+    already_owned_ids = {own["movie_id"] for own in ownerships}
 
-    favorite_films = [fetch_film_from_tmdb(fid) for fid in fav_ids]
-    library_films = [fetch_film_from_tmdb(fid) for fid in lib_ids]
+    for fid in legacy_ids:
+        if fid in already_owned_ids:
+            continue
+        ownerships.append(
+            {
+                "user_id": user_id,
+                "movie_id": fid,
+                "has_bluray": False,
+                "has_digital": False,
+                "bluray_price": None,
+                "digital_price": None,
+                "bluray_max_days": None,
+                "digital_max_days": None,
+                "is_public": False,
+            }
+        )
 
-    # Locations
+    # 3) Construire la liste des films pour l'affichage
+    library_movies = []
+    for own in ownerships:
+        film_id = own["movie_id"]
+        try:
+            # TMDb est déjà en fr-FR via tmdb_get()
+            movie = tmdb_get(f"/movie/{film_id}")
+            film = tmdb_movie_to_film(movie)
+        except Exception:
+            # fallback au cas où TMDb ne répond plus
+            film = {
+                "id": film_id,
+                "titre": f"Film #{film_id}",
+                "annee": None,
+                "realisateur": "",
+                "resume": "",
+                "affiche_url": None,
+                "genres": [],
+            }
+
+        library_movies.append(
+            {
+                "movie": film,      # infos film pour l'affichage
+                "ownership": own,   # formats, prix, durée, public/privé…
+            }
+        )
+
+    # 4) Locations de l'utilisateur (même logique que /my_rentals)
     now = datetime.utcnow()
     rentals = []
-    for r in data["rentals"]:
-        if r["user_id"] != user_id:
+
+    for r in data.get("rentals", []):
+        if r.get("user_id") != user_id:
             continue
-        movie = tmdb_get(f"/movie/{r['movie_id']}")
-        film = tmdb_movie_to_film(movie)
-        exp = datetime.fromisoformat(r["expires_at"])
+
+        film_id = r["movie_id"]
+        try:
+            movie = tmdb_get(f"/movie/{film_id}")
+            film = tmdb_movie_to_film(movie)
+        except Exception:
+            film = {
+                "id": film_id,
+                "titre": f"Film #{film_id}",
+                "annee": None,
+                "realisateur": "",
+            }
+
+        expires = datetime.fromisoformat(r["expires_at"])
         rentals.append(
             {
-                "film": film,
+                "titre": film["titre"],
+                "annee": film["annee"],
+                "realisateur": film.get("realisateur"),
                 "rented_at": r["rented_at"],
                 "expires_at": r["expires_at"],
-                "is_active": exp > now,
+                "is_active": expires > now,
+                "film_id": film_id,
                 "price_eur": r["price_cents"] / 100.0,
             }
         )
 
-    return render_template(
-        "profile.html",
-        active_tab=active_tab,
-        favorite_films=favorite_films,
-        library_films=library_films,
-        rentals=rentals,
-        favorite_ids=set(fav_ids),
-        library_ids=set(lib_ids),
-    )
+    return {
+        "user": user,
+        "library_movies": library_movies,
+        "rentals": rentals,
+    }
+
+
+@app.route("/profile")
+@login_required
+def profile():
+    ctx = _build_profile_context()
+    ctx["active_tab"] = "library"
+    return render_template("profile.html", **ctx)
+
+
+@app.route("/profile/locations")
+@login_required
+def profile_locations():
+    ctx = _build_profile_context()
+    ctx["active_tab"] = "locations"
+    return render_template("profile.html", **ctx)
 
 # ---------- Accueil : films populaires TMDb ----------
 
@@ -616,6 +684,7 @@ def own_film(film_id):
     digital_max_days = parse_int("digital_max_days") if has_digital else None
 
     existing = find_ownership(data, user_id, film_id)
+
     if existing:
         existing["has_bluray"] = has_bluray
         existing["has_digital"] = has_digital
@@ -634,12 +703,85 @@ def own_film(film_id):
                 "digital_price": digital_price,
                 "bluray_max_days": bluray_max_days,
                 "digital_max_days": digital_max_days,
+                "is_public": False,  #par défaut : vidéothèque privée
             }
         )
 
     save_data(data)
     flash("Le film a été ajouté à votre vidéothèque.", "success")
     return redirect(url_for("film_detail", film_id=film_id))
+
+@app.post("/profile/library/<int:film_id>/toggle-public")
+@login_required
+def toggle_library_public(film_id):
+    """Rend un film de la vidéothèque public ou privé."""
+    data = load_data()
+    user_id = session["user_id"]
+
+    own = find_ownership(data, user_id, film_id)
+    if not own:
+        flash("Ce film n'est pas dans votre vidéothèque.", "warning")
+        return redirect(url_for("profile", tab="library"))
+
+    current = bool(own.get("is_public", False))
+    own["is_public"] = not current
+    save_data(data)
+
+    flash(
+        "Le film est maintenant {}."
+        .format("public" if own["is_public"] else "privé"),
+        "success"
+    )
+    return redirect(url_for("profile", tab="library"))
+
+
+@app.post("/profile/library/<int:film_id>/update")
+@login_required
+def update_library_item(film_id):
+    """Met à jour formats + prix pour un film dans la vidéothèque."""
+    data = load_data()
+    user_id = session["user_id"]
+
+    own = find_ownership(data, user_id, film_id)
+    if not own:
+        flash("Ce film n'est pas dans votre vidéothèque.", "warning")
+        return redirect(url_for("profile", tab="library"))
+
+    has_bluray = bool(request.form.get("has_bluray"))
+    has_digital = bool(request.form.get("has_digital"))
+
+    if not has_bluray and not has_digital:
+        flash("Veuillez choisir au moins un format (Blu-ray ou Digital).", "warning")
+        return redirect(url_for("profile", tab="library"))
+
+    def parse_float(field):
+        raw = request.form.get(field, "").strip()
+        if not raw:
+            return None
+        try:
+            return float(raw.replace(",", "."))
+        except ValueError:
+            return None
+
+    def parse_int(field):
+        raw = request.form.get(field, "").strip()
+        if not raw:
+            return None
+        try:
+            return int(raw)
+        except ValueError:
+            return None
+
+    own["has_bluray"] = has_bluray
+    own["has_digital"] = has_digital
+    own["bluray_price"] = parse_float("bluray_price") if has_bluray else None
+    own["digital_price"] = parse_float("digital_price") if has_digital else None
+    own["bluray_max_days"] = parse_int("bluray_max_days") if has_bluray else None
+    own["digital_max_days"] = parse_int("digital_max_days") if has_digital else None
+
+    save_data(data)
+    flash("Votre vidéothèque a été mise à jour.", "success")
+    return redirect(url_for("profile", tab="library"))
 
 @app.route("/films/<int:film_id>/availability")
 def film_availability(film_id):
@@ -664,7 +806,7 @@ def film_availability(film_id):
 
     ownerships_raw = [
         o for o in data.get("user_owns", [])
-        if o.get("movie_id") == film_id
+        if o.get("movie_id") == film_id and o.get("is_public", False)
     ]
 
     entries = []

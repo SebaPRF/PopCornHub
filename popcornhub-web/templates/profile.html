@@ -1,210 +1,340 @@
 {% extends "base.html" %}
-{% block title %}Mon profil PopCornHub{% endblock %}
+
+{% block title %}Mon profil{% endblock %}
 
 {% block content %}
-<div class="container py-5 profile-layout">
-  <div class="row g-4">
+<div class="layout-with-sidebar">
+    <!-- Sidebar -->
+    <aside class="profile-sidebar">
+        <div class="profile-sidebar-card">
+            <div class="profile-sidebar-title">Mon profil</div>
 
-    <!-- =============== SIDEBAR =============== -->
-    <div class="col-md-3 col-lg-2">
-      <div class="profile-sidebar">
-        <div class="profile-nav-title">Mon profil</div>
-        <ul class="nav flex-column profile-nav">
-
-          <!-- Favoris -->
-          <li class="nav-item">
-            <a class="nav-link {% if active_tab == 'favorites' %}active{% endif %}"
-               href="{{ url_for('profile', tab='favorites') }}">
-              <span class="icon">❤️</span> Mes favoris
+            <a href="{{ url_for('profile') }}"
+               class="profile-sidebar-link {% if active_tab == 'library' %}active{% endif %}">
+                <span>Ma vidéothèque</span>
             </a>
-          </li>
 
-          <!-- Ma liste -->
-          <li class="nav-item">
-            <a class="nav-link {% if active_tab == 'library' %}active{% endif %}"
-               href="{{ url_for('profile', tab='library') }}">
-              <span class="icon">📌</span> Ma vidéothèque
+            <a href="{{ url_for('profile_locations') }}"
+               class="profile-sidebar-link {% if active_tab == 'locations' %}active{% endif %}">
+                <span>Mes locations</span>
             </a>
-          </li>
+        </div>
+    </aside>
 
-          <!-- Locations -->
-          <li class="nav-item">
-            <a class="nav-link {% if active_tab == 'rentals' %}active{% endif %}"
-               href="{{ url_for('profile', tab='rentals') }}">
-              <span class="icon">🎬</span> Mes locations
-            </a>
-          </li>
+    <!-- Contenu principal -->
+    <main class="profile-main">
+        <header class="profile-header d-flex justify-content-between align-items-center">
+            <h1 class="page-title mb-0">Mon profil PopCornHub</h1>
+        </header>
 
-        </ul>
-      </div>
-    </div>
+        {# ------------------------- MA VIDEOTHEQUE ------------------------- #}
+        {% if active_tab == 'library' %}
+        <section id="library" class="section-block">
+            <h2 class="section-title">Ma vidéothèque</h2>
 
-    <!-- =============== CONTENU PRINCIPAL =============== -->
-    <div class="col-md-9 col-lg-10">
+            {% if library_movies|length == 0 %}
+                <p class="empty-state">
+                    Aucun film dans votre liste pour l'instant.
+                </p>
+            {% else %}
+                <div class="cards-grid cards-grid--library">
+                    {% for item in library_movies %}
+                        {% set film = item.movie %}
+                        {% set own = item.ownership %}
 
-      <h1 class="page-title mb-4">Mon profil PopCornHub</h1>
+                        <!-- Carte film -->
+                        <article class="film-card film-card--library">
+                            <div class="film-card__thumb">
+                                {% if film.affiche_url %}
+                                    <img src="{{ film.affiche_url }}" alt="Affiche de {{ film.titre }}">
+                                {% else %}
+                                    <div class="film-card__thumb--placeholder">
+                                        {{ film.titre }}
+                                    </div>
+                                {% endif %}
+                            </div>
 
-      <!-- ================= FAVORIS ================= -->
-      {% if active_tab == 'favorites' %}
-        <h2 class="mb-3">Mes favoris</h2>
+                            <div class="film-card__info">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h3 class="film-card__title mb-1">
+                                            <a href="{{ url_for('film_detail', film_id=film.id) }}">
+                                                {{ film.titre }}
+                                            </a>
+                                        </h3>
+                                        {% if film.annee %}
+                                            <p class="film-card__meta mb-0">{{ film.annee }}</p>
+                                        {% endif %}
+                                    </div>
 
-        {% if favorite_films %}
-          <div class="row row-cols-1 row-cols-md-3 g-4">
+                                    <!-- Badge public / privé -->
+                                    <form method="post"
+                                          action="{{ url_for('toggle_library_public', film_id=film.id) }}">
+                                        <button type="submit"
+                                                class="badge-status {{ 'badge-status--public' if own.is_public else 'badge-status--private' }}">
+                                            {% if own.is_public %}
+                                                Publique
+                                            {% else %}
+                                                Privée
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                </div>
 
-            {% for film in favorite_films %}
-            <div class="col">
-              <div class="film-card h-100" onclick="window.location='{{ url_for('film_detail', film_id=film.id) }}'">
-                
-                <div class="film-card-poster-wrapper">
-                  <img src="{{ film.affiche_url or url_for('static', filename='default_poster.png') }}"
-                       alt="{{ film.titre }}"
-                       class="film-card-poster"
-                       onerror="this.onerror=null; this.src='{{ url_for('static', filename='default_poster.png') }}';">
+                                <!-- Formats sous forme de tags -->
+                                <!-- Résumé formats + prix -->
+                                <div class="library-summary mb-2">
+                                    <div class="library-summary-label mb-1">
+                                        Formats &amp; location
+                                    </div>
+
+                                    <div class="library-summary-chips">
+                                        {% if own.has_bluray or own.has_digital %}
+                                            {% if own.has_bluray %}
+                                                <div class="library-chip">
+                                                    <span class="tag tag--format">Blu-ray</span>
+
+                                                    {% if own.bluray_price is not none %}
+                                                        <span class="library-chip-price">
+                                                            {{ '%.2f'|format(own.bluray_price) }} €
+                                                        </span>
+                                                    {% endif %}
+
+                                                    {% if own.bluray_max_days is not none %}
+                                                        <span class="library-chip-meta">
+                                                            · {{ own.bluray_max_days }} j max
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+
+                                            {% if own.has_digital %}
+                                                <div class="library-chip">
+                                                    <span class="tag tag--format">Digital</span>
+
+                                                    {% if own.digital_price is not none %}
+                                                        <span class="library-chip-price">
+                                                            {{ '%.2f'|format(own.digital_price) }} €
+                                                        </span>
+                                                    {% endif %}
+
+                                                    {% if own.digital_max_days is not none %}
+                                                        <span class="library-chip-meta">
+                                                            · {{ own.digital_max_days }} j max
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="library-summary-empty">
+                                                Aucun format renseigné
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="d-flex justify-content-between align-items-center gap-2">
+                                    <!-- Supprimer -->
+                                    <form method="post"
+                                          action="{{ url_for('update_library_item', film_id=film.id) }}"
+                                          onsubmit="return confirm('Retirer ce film de votre vidéothèque ?');">
+                                        <input type="hidden" name="delete" value="1">
+                                        <button type="submit"
+                                                class="btn btn-xs btn-outline-danger">
+                                            Supprimer
+                                        </button>
+                                    </form>
+
+                                    <!-- Modifier -->
+                                    <button type="button"
+                                            class="btn btn-xs btn-outline-light"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editLibraryModal-{{ film.id }}">
+                                        Modifier
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Modal d’édition -->
+                        <div class="modal fade" id="editLibraryModal-{{ film.id }}" tabindex="-1"
+                             aria-labelledby="editLibraryLabel-{{ film.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-lg modal-dialog-centered">
+                                <div class="modal-content profile-modal">
+                                    <form method="post"
+                                          action="{{ url_for('update_library_item', film_id=film.id) }}">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editLibraryLabel-{{ film.id }}">
+                                                Modifier « {{ film.titre }} »
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Fermer"></button>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            <div class="row g-3">
+                                                <div class="col-12">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox"
+                                                               id="publicSwitch-{{ film.id }}"
+                                                               name="is_public"
+                                                               {% if own.is_public %}checked{% endif %}>
+                                                        <label class="form-check-label"
+                                                               for="publicSwitch-{{ film.id }}">
+                                                            Rendre ce film visible pour les autres utilisateurs
+                                                            lors d’une recherche d’exemplaires.
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <div class="library-format-block">
+                                                        <label class="form-check mb-2">
+                                                            <input type="checkbox"
+                                                                   class="form-check-input"
+                                                                   name="has_bluray"
+                                                                   {% if own.has_bluray %}checked{% endif %}>
+                                                            <span class="form-check-label">
+                                                                Blu-ray (physique)
+                                                            </span>
+                                                        </label>
+                                                        <div class="row g-2">
+                                                            <div class="col-6">
+                                                                <label class="form-label small">
+                                                                    Prix location Blu-ray (€)
+                                                                    <input type="text"
+                                                                           class="form-control form-control-sm"
+                                                                           name="bluray_price"
+                                                                           value="{{ own.bluray_price if own.bluray_price is not none }}"
+                                                                           placeholder="ex: 2.50">
+                                                                </label>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label class="form-label small">
+                                                                    Durée max (jours)
+                                                                    <input type="text"
+                                                                           class="form-control form-control-sm"
+                                                                           name="bluray_max_days"
+                                                                           value="{{ own.bluray_max_days if own.bluray_max_days is not none }}"
+                                                                           placeholder="ex: 3">
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <div class="library-format-block">
+                                                        <label class="form-check mb-2">
+                                                            <input type="checkbox"
+                                                                   class="form-check-input"
+                                                                   name="has_digital"
+                                                                   {% if own.has_digital %}checked{% endif %}>
+                                                            <span class="form-check-label">
+                                                                Version digitale / streaming
+                                                            </span>
+                                                        </label>
+                                                        <div class="row g-2">
+                                                            <div class="col-6">
+                                                                <label class="form-label small">
+                                                                    Prix location Digital (€)
+                                                                    <input type="text"
+                                                                           class="form-control form-control-sm"
+                                                                           name="digital_price"
+                                                                           value="{{ own.digital_price if own.digital_price is not none }}"
+                                                                           placeholder="ex: 1.99">
+                                                                </label>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label class="form-label small">
+                                                                    Durée max (jours)
+                                                                    <input type="text"
+                                                                           class="form-control form-control-sm"
+                                                                           name="digital_max_days"
+                                                                           value="{{ own.digital_max_days if own.digital_max_days is not none }}"
+                                                                           placeholder="ex: 3">
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <p class="text-muted small mt-3 mb-0">
+                                                Astuce : ne coche que les formats que tu possèdes vraiment.
+                                                Les autres ne verront tes exemplaires que dans ces formats-là.
+                                            </p>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary"
+                                                    data-bs-dismiss="modal">
+                                                Annuler
+                                            </button>
+                                            <button type="submit" class="btn btn-popcorn-primary">
+                                                Enregistrer
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
-
-                <div class="film-card-body">
-                  <h5 class="film-card-title mb-1">{{ film.titre }}</h5>
-                  <p class="film-card-meta">{{ film.annee }}</p>
-
-                  <div class="film-card-actions">
-
-                    <!-- Favoris -->
-                    <form method="post"
-                          action="{{ url_for('toggle_favorite', film_id=film.id) }}"
-                          onclick="event.stopPropagation();">
-                      <button class="favorite-btn {% if film.id in favorite_ids %}is-favorite{% endif %}">
-                        <span class="favorite-icon">❤</span>
-                      </button>
-                    </form>
-
-                    <!-- Liste (pin) -->
-                    <form method="post"
-                          action="{% if film.id in library_ids %}{{ url_for('remove_from_library', film_id=film.id) }}{% else %}{{ url_for('add_to_library', film_id=film.id) }}{% endif %}"
-                          onclick="event.stopPropagation();">
-                      <button class="pin-btn {% if film.id in library_ids %}is-in-list{% endif %}">
-                        <span class="pin-icon">📌</span>
-                      </button>
-                    </form>
-
-                  </div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
-
-          </div>
-        {% else %}
-          <p class="opacity-75 mt-2">Vous n’avez pas encore ajouté de favoris.</p>
+            {% endif %}
+        </section>
         {% endif %}
-      {% endif %}
 
-      <!-- ================= MA LISTE ================= -->
-      {% if active_tab == 'library' %}
-        <h2 class="mb-3">Ma vidéothèque</h2>
+        {# ------------------------- MES LOCATIONS ------------------------- #}
+        {% if active_tab == 'locations' %}
+        <section id="rentals" class="section-block">
+            <h2 class="section-title">Mes locations</h2>
 
-        {% if library_films %}
-          <div class="row row-cols-1 row-cols-md-3 g-4">
-
-            {% for film in library_films %}
-            <div class="col">
-              <div class="film-card h-100" onclick="window.location='{{ url_for('film_detail', film_id=film.id) }}'">
-
-                <div class="film-card-poster-wrapper">
-                  <img src="{{ film.affiche_url or url_for('static', filename='default_poster.png') }}"
-                       alt="{{ film.titre }}"
-                       class="film-card-poster"
-                       onerror="this.onerror=null; this.src='{{ url_for('static', filename='default_poster.png') }}';">
+            {% if rentals|length == 0 %}
+                <p class="empty-state">
+                    Aucune location pour le moment.
+                </p>
+            {% else %}
+                <div class="rentals-list">
+                    {% for r in rentals %}
+                        <div class="rental-item">
+                            <div class="rental-main">
+                                <div class="rental-title">
+                                    {{ r.titre }}
+                                    {% if r.annee %} ({{ r.annee }}){% endif %}
+                                </div>
+                                {% if r.realisateur %}
+                                    <div class="rental-meta">
+                                        Réalisateur : {{ r.realisateur }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="rental-meta">
+                                Loué le {{ r.rented_at|replace('T', ' ') }}
+                                – jusqu'au {{ r.expires_at|replace('T', ' ') }}
+                            </div>
+                            <div class="rental-footer">
+                                <span class="badge {{ 'badge-success' if r.is_active else 'badge-secondary' }}">
+                                    {% if r.is_active %}En cours{% else %}Expirée{% endif %}
+                                </span>
+                                <span class="rental-price">
+                                    {{ '%.2f'|format(r.price_eur) }} €
+                                </span>
+                                {% if r.is_active %}
+                                    <a href="{{ url_for('watch_film', film_id=r.film_id) }}"
+                                       class="btn btn-xs btn-primary">
+                                        Regarder
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
-
-                <div class="film-card-body">
-                  <h5 class="film-card-title mb-1">{{ film.titre }}</h5>
-                  <p class="film-card-meta">{{ film.annee }}</p>
-
-                  <div class="film-card-actions">
-
-                    <!-- Favoris -->
-                    <form action="{{ url_for('toggle_favorite', film_id=film.id) }}"
-                          method="post"
-                          onclick="event.stopPropagation();">
-                      <button class="favorite-btn {% if film.id in favorite_ids %}is-favorite{% endif %}">
-                        <span class="favorite-icon">❤</span>
-                      </button>
-                    </form>
-
-                    <!-- Liste (pin) -->
-                    <form action="{% if film.id in library_ids %}{{ url_for('remove_from_library', film_id=film.id) }}{% else %}{{ url_for('add_to_library', film_id=film.id) }}{% endif %}"
-                          method="post"
-                          onclick="event.stopPropagation();">
-                      <button class="pin-btn {% if film.id in library_ids %}is-in-list{% endif %}">
-                        <span class="pin-icon">📌</span>
-                      </button>
-                    </form>
-
-                  </div>
-                </div>
-
-              </div>
-            </div>
-            {% endfor %}
-
-          </div>
-        {% else %}
-          <p class="opacity-75 mt-2">Aucun film dans votre liste pour l'instant.</p>
+            {% endif %}
+        </section>
         {% endif %}
-      {% endif %}
-
-      <!-- ================= LOCATIONS ================= -->
-      {% if active_tab == 'rentals' %}
-        <h2 class="mb-3">Mes locations</h2>
-
-        {% if rentals %}
-          <div class="row row-cols-1 row-cols-md-3 g-4">
-
-            {% for r in rentals %}
-            <div class="col">
-              <div class="film-card h-100" onclick="window.location='{{ url_for('film_detail', film_id=r.film.id) }}'">
-
-                <div class="film-card-poster-wrapper">
-                  <img src="{{ r.film.affiche_url or url_for('static', filename='default_poster.png') }}"
-                       alt="{{ r.film.titre }}"
-                       class="film-card-poster"
-                       onerror="this.onerror=null; this.src='{{ url_for('static', filename='default_poster.png') }}';">
-                </div>
-
-                {% if r.is_active %}
-                  <span class="rental-badge">Loué jusqu'au {{ r.expires_at[:10] }}</span>
-                {% endif %}
-
-                <div class="film-card-body">
-                  <h5 class="film-card-title">{{ r.film.titre }}</h5>
-                  <p class="film-card-meta">{{ r.film.annee }}</p>
-
-                  <div class="d-flex justify-content-between align-items-center">
-                    {% if r.is_active %}
-                      <a href="{{ url_for('watch_film', film_id=r.film.id) }}"
-                         class="btn btn-popcorn-primary btn-sm"
-                         onclick="event.stopPropagation();">
-                        Regarder
-                      </a>
-                    {% else %}
-                      <span class="text-muted small">Location expirée</span>
-                    {% endif %}
-                    <span class="small">{{ "%.2f"|format(r.price_eur) }} €</span>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-            {% endfor %}
-
-          </div>
-        {% else %}
-          <p class="opacity-75 mt-2">Vous n'avez pas encore loué de films.</p>
-        {% endif %}
-      {% endif %}
-
-    </div>
-
-  </div>
+    </main>
 </div>
 {% endblock %}

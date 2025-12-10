@@ -265,44 +265,261 @@ p, span, li, label {
 }
 
 /* ============================
-   👤 PROFIL — SIDEBAR
+   👤 PROFIL — SIDEBAR & VIDÉOTHÈQUE
 ============================ */
-.profile-layout {
-  max-width: 1200px;
+
+/* Layout global avec sidebar à gauche */
+.layout-with-sidebar {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
 }
 
 .profile-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.profile-main {
+  flex: 1;
+}
+
+/* Carte de la sidebar */
+.profile-sidebar-card {
   background-color: #151515;
   border-radius: 18px;
-  padding: 1.5rem 1.25rem;
+  padding: 1.25rem 1rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-.profile-nav-title {
+.profile-sidebar-title {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   margin-bottom: 0.75rem;
 }
 
-.profile-nav .nav-link {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
+.profile-sidebar-link {
+  display: block;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
   color: #bbb;
-  padding: 0.4rem 0.25rem;
-  border-radius: 8px;
-  font-size: 0.95rem;
+  text-decoration: none;
+  margin-bottom: 0.3rem;
 }
 
-.profile-nav .nav-link:hover {
+.profile-sidebar-link:hover {
   background-color: #222;
   color: #fff;
 }
 
-.profile-nav .nav-link.active {
+.profile-sidebar-link.active {
   background-color: #ff9800;
   color: #111;
   font-weight: 600;
+}
+
+/* Titres & sections du profil */
+.profile-header {
+  margin-bottom: 1.75rem;
+}
+
+.section-block {
+  margin-top: 2rem;
+}
+
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.empty-state {
+  color: #aaa;
+  font-size: 0.95rem;
+}
+
+/* Grille des films dans la vidéothèque */
+.cards-grid--library {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 1.25rem;
+}
+
+.film-card--library {
+  display: flex;
+  gap: 0.75rem;
+  background-color: #151515;
+  border-radius: 16px;
+  padding: 0.75rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+}
+
+.film-card__thumb {
+  width: 90px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.film-card__thumb img {
+  width: 100%;
+  height: 135px;
+  object-fit: cover;
+  display: block;
+}
+
+.film-card__thumb--placeholder {
+  font-size: 0.8rem;
+  padding: 0.5rem;
+  color: #aaa;
+}
+
+.film-card__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.film-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.film-card__title a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.film-card__title a:hover {
+  text-decoration: underline;
+}
+
+.film-card__meta {
+  font-size: 0.85rem;
+  color: #ccc;
+}
+
+/* Badge public / privé */
+.badge-status {
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.7rem;
+  border: 1px solid transparent;
+  background-color: #222;
+  color: #ddd;
+}
+
+.badge-status--public {
+  border-color: #2ecc71;
+  color: #2ecc71;
+}
+
+.badge-status--private {
+  border-color: #888;
+  color: #bbb;
+}
+
+/* Résumé des formats & prix */
+.library-summary {
+  font-size: 0.8rem;
+}
+
+.library-summary-row {
+  display: flex;
+}
+
+.library-summary-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #9ca3af);
+}
+
+.library-summary-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.library-summary-value {
+  color: #fff;
+}
+
+.library-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.85rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tag--format {
+  background: #facc15;      
+  color: #111827;
+}
+
+.library-chip-price {
+  font-weight: 600;
+}
+
+.library-chip-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted, #9ca3af);
+}
+
+.library-summary-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted, #9ca3af);
+}
+
+/* Modal de modification dans la vidéothèque */
+.profile-modal {
+  background-color: #181818;
+  color: #fff;
+  border-radius: 18px;
+}
+
+.profile-modal .modal-header,
+.profile-modal .modal-footer {
+  border-color: #333;
+}
+
+.profile-modal .form-label,
+.profile-modal .form-check-label {
+  color: #ddd;
+}
+
+.library-format-block {
+  background-color: #111;
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #222;
+}
+
+.library-format-block .form-control-sm {
+  background-color: #1f1f1f;
+  border-color: #333;
+  color: #f5f5f5;
+}
+
+.library-format-block .form-control-sm:focus {
+  background-color: #222;
+  border-color: #ff9800;
+  box-shadow: 0 0 0 1px #ff9800aa;
 }
 
 /* ============================

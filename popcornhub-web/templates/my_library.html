@@ -4,38 +4,55 @@
 {% block content %}
 <h1 class="mb-4">Ma vidéothèque</h1>
 
-{% if films %}
-  <div class="row row-cols-1 row-cols-md-3 g-4">
-    {% for film in films %}
-    <div class="col">
-      <div class="card h-100 card-popcorn">
-        {% if film.affiche_url %}
-  <img src="{{ film.affiche_url }}"
-       alt="{{ film.titre }}"
-       class="card-img-top">
-{% else %}
-  <img src="{{ url_for('static', filename='default_poster.png') }}"
-       alt="{{ film.titre }}"
-       class="card-img-top">
-{% endif %}
-        <div class="card-body">
-          <h5 class="card-title">{{ film.titre }}</h5>
-          <p class="card-text">{{ film.annee }} • {{ film.realisateur }}</p>
-        </div>
-        <div class="card-footer d-flex justify-content-between">
-          <form action="{{ url_for('remove_from_library', film_id=film.id) }}" method="post">
-            <button class="btn btn-secondary btn-sm">Retirer</button>
-          </form>
-          <a href="{{ url_for('film_detail', film_id=film.id) }}" class="btn btn-outline-light btn-sm">
-            Détails
-          </a>
+{% if library_ownerships|length == 0 %}
+    <p class="text-light">
+      Vous n'avez pas encore ajouté de films à votre vidéothèque.
+    </p>
+  {% endif %}
+
+  <div class="row g-4">
+    {% for item in library_ownerships %}
+      {% set film = item.film %}
+      {% set own = item.own %}
+
+      <div class="col-md-6 col-lg-4">
+        <div class="card bg-dark border-secondary h-100 shadow-sm">
+          {% if film.affiche_url %}
+            <img src="{{ film.affiche_url }}"
+                 class="card-img-top"
+                 style="object-fit:cover;height:260px;"
+                 alt="Affiche de {{ film.titre }}">
+          {% endif %}
+
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="card-title mb-0">{{ film.titre }}</h5>
+              {% if item.is_public %}
+                <span class="badge bg-success">Publique</span>
+              {% else %}
+                <span class="badge bg-secondary">Privée</span>
+              {% endif %}
+            </div>
+
+            <!-- Formulaire de modification -->
+            <form action="{{ url_for('update_library_item', film_id=film.id) }}"
+                  method="post" class="mb-2">
+              <!-- Blu-ray -->
+              ...
+            </form>
+
+            <!-- Bouton public / privé -->
+            <form action="{{ url_for('toggle_library_public', film_id=film.id) }}"
+                  method="post">
+              <button class="btn btn-outline-light btn-sm w-100">
+                {% if item.is_public %}Rendre privé{% else %}Rendre public{% endif %}
+              </button>
+            </form>
+
+          </div>
         </div>
       </div>
-    </div>
     {% endfor %}
   </div>
-{% else %}
-  <p>Votre vidéothèque est vide. Ajoutez des films depuis le catalogue PopCornHub.</p>
-{% endif %}
 
-{% endblock %}
+{% endif %}
