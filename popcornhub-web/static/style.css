@@ -652,3 +652,176 @@ p, span, li, label {
   gap: 8px;
   margin-bottom: 6px;
 }
+
+/* ============================
+   📦 PAGE EXEMPLAIRES DISPONIBLES
+============================ */
+
+.availability-header {
+  margin-bottom: 1.5rem;
+}
+
+.availability-header h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+}
+
+.availability-header p {
+  color: #d1d5db;
+  font-size: 0.95rem;
+  max-width: 920px;
+}
+
+/* Bloc de filtres */
+
+.availability-filters {
+  margin-bottom: 1.8rem;
+  padding: 1.1rem 1.25rem 1.3rem;
+  border-radius: 18px;
+  background: #111827;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.availability-filters-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+@media (max-width: 992px) {
+  .availability-filters-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.availability-filters .form-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.availability-filters .form-select,
+.availability-filters .form-control {
+  border-radius: 999px;
+  border: none;
+  background-color: #f9fafb;
+  color: #111827;
+  padding-inline: 1rem;
+  height: 2.6rem;
+  font-size: 0.92rem;
+}
+
+.availability-filters .form-control::placeholder {
+  color: #9ca3af;
+}
+
+.availability-filters .form-select:focus,
+.availability-filters .form-control:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #fb923caa;
+}
+
+.availability-filters .btn-popcorn-primary {
+  height: 2.6rem;
+  margin-top: 1.3rem;
+}
+
+/* Liste des exemplaires */
+
+.availability-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.availability-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.2rem;
+  border-radius: 14px;
+  background: #111827;
+  border: 1px solid rgba(249, 250, 251, 0.05);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+}
+
+@media (max-width: 768px) {
+  .availability-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Partie gauche : info propriétaire + formats */
+
+.availability-owner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.availability-owner-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.availability-owner-legend {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* Chips de formats */
+
+.availability-formats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.availability-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.9);
+  border: 1px solid rgba(249, 250, 251, 0.06);
+  font-size: 0.82rem;
+}
+
+.availability-chip-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #facc15;
+}
+
+.availability-chip-meta {
+  color: #e5e7eb;
+}
+
+/* Partie droite : prix minimum */
+
+.availability-price-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: #f97316;
+  color: #111827;
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.availability-empty {
+  color: #9ca3af;
+  font-size: 0.95rem;
+  margin-top: 0.75rem;
+}
