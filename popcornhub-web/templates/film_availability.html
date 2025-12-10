@@ -1,93 +1,234 @@
 {% extends "base.html" %}
 
-{% block title %}Exemplaires disponibles — {{ film.titre }}{% endblock %}
-
 {% block content %}
-<div class="container my-4">
-
-  <h1 class="mb-2">Exemplaires disponibles — {{ film.titre }}</h1>
-  <p class="text-light mb-4" style="opacity:.8;">
-    Voici les utilisateurs qui possèdent ce film dans leur vidéothèque et qui le proposent éventuellement à la location.
+<div class="page-header mb-5">
+  <h1 class="page-title">Exemplaires disponibles — {{ film.titre }}</h1>
+  <p class="page-subtitle">
+    Voici les utilisateurs qui possèdent ce film dans leur vidéothèque
+    et qui le proposent éventuellement à la location.
   </p>
+</div>
 
-  <!-- FILTRES -->
-  <form method="get" class="row g-3 align-items-end mb-4">
-    <!-- Format -->
-    <div class="col-md-3">
-      <label class="form-label">Format</label>
-      <select name="format" class="form-select">
-        <option value="all"   {% if format_filter == 'all' %}selected{% endif %}>Tous</option>
-        <option value="bluray" {% if format_filter == 'bluray' %}selected{% endif %}>Blu-ray uniquement</option>
-        <option value="digital" {% if format_filter == 'digital' %}selected{% endif %}>Streaming uniquement</option>
-        <option value="both" {% if format_filter == 'both' %}selected{% endif %}>Blu-ray + Streaming</option>
+<form method="get" class="availability-filters mb-4">
+  <div class="filters-row">
+    <div class="filter-group">
+      <label for="format-select">Format</label>
+      <select id="format-select" name="format" class="form-control">
+        <option value="all"    {{ "selected" if format_filter == "all"    else "" }}>Tous</option>
+        <option value="bluray" {{ "selected" if format_filter == "bluray" else "" }}>Blu-ray</option>
+        <option value="digital"{{ "selected" if format_filter == "digital" else "" }}>Streaming</option>
+        <option value="both"   {{ "selected" if format_filter == "both"   else "" }}>Blu-ray + Streaming</option>
       </select>
     </div>
 
-    <!-- Tri -->
-    <div class="col-md-3">
-      <label class="form-label">Trier par</label>
-      <select name="sort_by" class="form-select">
-        <option value="price_asc"  {% if sort_by == 'price_asc' %}selected{% endif %}>Prix croissant</option>
-        <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Prix décroissant</option>
-        <option value="rating_desc" {% if sort_by == 'rating_desc' %}selected{% endif %}>Note vendeur décroissante</option>
-        <option value="rating_asc" {% if sort_by == 'rating_asc' %}selected{% endif %}>Note vendeur croissante</option>
+    <div class="filter-group">
+      <label for="sort-by-select">Trier par</label>
+      <select id="sort-by-select" name="sort_by" class="form-control">
+        <option value="price_asc"  {{ "selected" if sort_by == "price_asc"  else "" }}>Prix croissant</option>
+        <option value="price_desc" {{ "selected" if sort_by == "price_desc" else "" }}>Prix décroissant</option>
+        <option value="rating_desc"{{ "selected" if sort_by == "rating_desc" else "" }}>Note vendeur décroissante</option>
+        <option value="rating_asc" {{ "selected" if sort_by == "rating_asc" else "" }}>Note vendeur croissante</option>
       </select>
     </div>
 
-    <!-- Bouton -->
-    <div class="col-md-3 d-grid">
-      <button type="submit" class="btn btn-popcorn-primary mt-2 mt-md-0">
+    <div class="filter-group">
+      <label for="max-price-input">Prix max (€)</label>
+      <input
+        id="max-price-input"
+        type="text"
+        name="max_price"
+        class="form-control"
+        placeholder="ex: 3.00"
+        value="{{ max_price or '' }}"
+      />
+    </div>
+
+    <div class="filter-group filter-group-button">
+      <button type="submit" class="btn btn-primary btn-lg w-100">
         Filtrer
       </button>
     </div>
-  </form>
+  </div>
+</form>
 
-  {% if entries %}
-    <div class="list-group">
-      {% for e in entries %}
-        <div class="list-group-item bg-dark border-secondary text-light">
-
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <div>
+{% if entries %}
+  <div class="availability-list">
+    {% for e in entries %}
+      <div class="availability-card">
+        <div class="availability-card-main">
+          <div class="availability-owner">
+            <div class="availability-owner-name">
               <strong>{{ e.owner_name }}</strong>
+            </div>
 
-              {% if e.seller_rating %}
-                <span class="ms-2 text-warning">
-                  {{ "%.1f"|format(e.seller_rating) }}/5
-                </span>
+            <div class="availability-formats mb-2">
+              {% if e.has_bluray %}
+                <span class="tag tag-format tag-bluray">Blu-ray</span>
+              {% endif %}
+              {% if e.has_digital %}
+                <span class="tag tag-format tag-digital">Streaming</span>
               {% endif %}
             </div>
 
+            <div class="availability-prices">
+              {% if e.has_bluray %}
+                <div class="format-line">
+                  <strong>Blu-ray :</strong>
+                  {% if e.bluray_price is not none %}
+                    {{ '%.2f'|format(e.bluray_price) }} €
+                  {% else %}
+                    prix non renseigné
+                  {% endif %}
+                  {% if e.bluray_max_days %}
+                    ({{ e.bluray_max_days }} j max)
+                  {% endif %}
+                </div>
+              {% endif %}
+
+              {% if e.has_digital %}
+                <div class="format-line">
+                  <strong>Streaming :</strong>
+                  {% if e.digital_price is not none %}
+                    {{ '%.2f'|format(e.digital_price) }} €
+                  {% else %}
+                    prix non renseigné
+                  {% endif %}
+                  {% if e.digital_max_days %}
+                    ({{ e.digital_max_days }} j max)
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="availability-actions">
             {% if e.min_price is not none %}
-              <span class="badge bg-warning text-dark">
-                à partir de {{ "%.2f"|format(e.min_price) }} &euro;
-              </span>
+              <button
+                type="button"
+                class="btn btn-primary availability-rent-btn"
+                data-open-modal="rent-owner-{{ e.owner_id }}"
+              >
+                À partir de {{ '%.2f'|format(e.min_price) }} €
+              </button>
+            {% else %}
+              <span class="badge badge-muted">Tarif non défini</span>
             {% endif %}
           </div>
-
-          <div class="small mb-1">
-            {% if e.has_bluray %}
-              <span class="badge rounded-pill bg-secondary me-1">
-                Blu-ray — {{ "%.2f"|format(e.bluray_price) }} &euro;
-                {% if e.bluray_max_days %} ({{ e.bluray_max_days }} j max){% endif %}
-              </span>
-            {% endif %}
-            {% if e.has_digital %}
-              <span class="badge rounded-pill bg-secondary me-1">
-                Streaming — {{ "%.2f"|format(e.digital_price) }} &euro;
-                {% if e.digital_max_days %} ({{ e.digital_max_days }} j max){% endif %}
-              </span>
-            {% endif %}
-          </div>
-
         </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <p class="text-light mt-4">
-      Aucun exemplaire disponible pour le moment.
-    </p>
-  {% endif %}
 
-</div>
+        {# --- MODAL de location pour ce propriétaire --- #}
+        {% if e.has_bluray or e.has_digital %}
+          <div
+            class="modal-backdrop"
+            id="modal-rent-owner-{{ e.owner_id }}"
+            style="display:none;"
+          >
+            <div class="modal-card">
+              <div class="modal-header">
+                <h2 class="modal-title">
+                  Louer « {{ film.titre }} » chez {{ e.owner_name }}
+                </h2>
+              </div>
+
+              <form
+                method="post"
+                action="{{ url_for('rent_from_owner', film_id=film.id, owner_id=e.owner_id) }}"
+              >
+                <div class="modal-body">
+                  <p>Choisissez le format que vous souhaitez louer :</p>
+
+                  <div class="mb-3">
+                    {% if e.has_bluray %}
+                      <label class="rent-option">
+                        <input type="radio" name="format" value="bluray" required />
+                        <span>
+                          Blu-ray — 
+                          {% if e.bluray_price is not none %}
+                            {{ '%.2f'|format(e.bluray_price) }} €
+                          {% else %}
+                            prix non renseigné
+                          {% endif %}
+                          {% if e.bluray_max_days %}
+                            ({{ e.bluray_max_days }} jours max)
+                          {% endif %}
+                        </span>
+                      </label>
+                    {% endif %}
+
+                    {% if e.has_digital %}
+                      <label class="rent-option">
+                        <input type="radio" name="format" value="digital" required />
+                        <span>
+                          Streaming — 
+                          {% if e.digital_price is not none %}
+                            {{ '%.2f'|format(e.digital_price) }} €
+                          {% else %}
+                            prix non renseigné
+                          {% endif %}
+                          {% if e.digital_max_days %}
+                            ({{ e.digital_max_days }} jours max)
+                          {% endif %}
+                        </span>
+                      </label>
+                    {% endif %}
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="duration-{{ e.owner_id }}">Durée de location (jours)</label>
+                    <input
+                      id="duration-{{ e.owner_id }}"
+                      type="number"
+                      name="duration_days"
+                      class="form-control"
+                      min="1"
+                      {# on ne met pas de max ici, c’est géré côté serveur #}
+                      placeholder="ex : 3"
+                    />
+                    <small class="form-hint">
+                      Si vous laissez vide, la durée max proposée par le propriétaire sera utilisée.
+                    </small>
+                  </div>
+                </div>
+
+                <div class="modal-footer">
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-close-modal="rent-owner-{{ e.owner_id }}"
+                  >
+                    Annuler
+                  </button>
+                  <button type="submit" class="btn btn-primary">
+                    Confirmer la location
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>Aucun exemplaire disponible pour le moment.</p>
+{% endif %}
+
+{# --- Petit JS pour ouvrir / fermer les modals de location --- #}
+<script>
+  document.querySelectorAll("[data-open-modal]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-open-modal");
+      const modal = document.getElementById("modal-" + id);
+      if (modal) modal.style.display = "flex";
+    });
+  });
+
+  document.querySelectorAll("[data-close-modal]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-close-modal");
+      const modal = document.getElementById("modal-" + id);
+      if (modal) modal.style.display = "none";
+    });
+  });
+</script>
 {% endblock %}
