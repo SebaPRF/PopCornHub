@@ -795,7 +795,8 @@ def film_availability(film_id):
     users_by_id = {u["id"]: u for u in data.get("users", [])}
 
     ownerships_raw = [
-        o for o in data.get("user_owns", [])
+        o
+        for o in data.get("user_owns", [])
         if o.get("movie_id") == film_id and o.get("is_public", False)
     ]
 
@@ -805,6 +806,7 @@ def film_availability(film_id):
         if not user:
             continue
 
+        # ne pas proposer ses propres exemplaires
         if session.get("user_id") == own["user_id"]:
             continue
 
@@ -814,11 +816,11 @@ def film_availability(film_id):
         bluray_price = own.get("bluray_price")
         digital_price = own.get("digital_price")
 
-        prices = [p for p in [bluray_price, digital_price] if p is not None]
+        prices = [p for p in (bluray_price, digital_price) if p is not None]
         min_price = min(prices) if prices else None
 
         # Placeholder pour une future "note vendeur"
-        seller_rating = own.get("seller_rating")  # actuel. non utilisé => None
+        seller_rating = own.get("seller_rating")  # actuellement non utilisé
 
         entries.append(
             {
@@ -835,176 +837,172 @@ def film_availability(film_id):
             }
         )
 
-    @app.post("/films/<int:film_id>/rent-from-owner/<int:owner_id>")
-    @login_required
-    def rent_from_owner(film_id, owner_id):
-        """
-        Loue un exemplaire précis depuis la page 'Exemplaires disponibles'.
-        On enregistre :
-        - le film
-        - l'owner (propriétaire)
-        - le format choisi (bluray / digital)
-        - le prix renseigné par le propriétaire
-        - la durée (limitée par sa durée max)
-        La location apparaîtra ensuite dans 'Mes locations'.
-        """
-        data = load_data()
-        user_id = session["user_id"]
-        now = datetime.utcnow()
+    # --- 3) Récupérer les filtres GET ---
+    format_filter = request.args.get("format", "all")  # all | bluray | digital | both
+    sort_by = request.args.get("sort_by", "price_asc")  # price_asc/desc, rating_asc/desc
+    max_price_str = request.args.get("max_price", "").strip()
 
-        # 1) Vérifier si l'utilisateur a déjà une location active pour ce film
-        for r in data.get("rentals", []):
-            if r["user_id"] == user_id and r["movie_id"] == film_id:
-                last_expires = datetime.fromisoformat(r["expires_at"])
-                if last_expires > now:
-                    flash(
-                        "Vous avez déjà une location active pour ce film "
-                        f"(jusqu’au {last_expires.strftime('%d/%m/%Y %H:%M')}).",
-                        "warning",
-                    )
-                    return redirect(url_for("film_availability", film_id=film_id))
+    # Filtre par format
+    if format_filter == "bluray":
+        entries = [e for e in entries if e["has_bluray"]]
+    elif format_filter == "digital":
+        entries = [e for e in entries if e["has_digital"]]
+    elif format_filter == "both":
+        entries = [e for e in entries if e["has_bluray"] and e["has_digital"]]
+    # sinon "all" → aucun filtre
 
-        # 2) Retrouver l'exemplaire du propriétaire
-        own = None
-        for o in data.get("user_owns", []):
-            if (
-                o.get("user_id") == owner_id
-                and o.get("movie_id") == film_id
-                and o.get("is_public", False)
-            ):
-                own = o
-                break
-
-        if not own:
-            flash("Cet exemplaire n’est plus disponible.", "warning")
-            return redirect(url_for("film_availability", film_id=film_id))
-
-        # 3) Récupérer le format choisi
-        fmt = request.form.get("format")
-        if fmt not in ("bluray", "digital"):
-            flash("Veuillez choisir un format à louer.", "warning")
-            return redirect(url_for("film_availability", film_id=film_id))
-
-        if fmt == "bluray" and not own.get("has_bluray"):
-            flash("Ce propriétaire ne propose plus le Blu-ray.", "warning")
-            return redirect(url_for("film_availability", film_id=film_id))
-
-        if fmt == "digital" and not own.get("has_digital"):
-            flash("Ce propriétaire ne propose plus le streaming.", "warning")
-            return redirect(url_for("film_availability", film_id=film_id))
-
-        # 4) Récupérer prix et durée max selon le format
-        if fmt == "bluray":
-            price = own.get("bluray_price")
-            max_days = own.get("bluray_max_days")
-        else:
-            price = own.get("digital_price")
-            max_days = own.get("digital_max_days")
-
-        # fallback si jamais le prix n’est pas renseigné
-        if price is None:
-            price = own.get("bluray_price") or own.get("digital_price") or 3.99
-
-        price_cents = int(round(price * 100))
-
-        # Durée demandée par l’utilisateur (optionnelle)
+    # Filtre par prix max
+    max_price = None
+    if max_price_str:
         try:
-            duration_days = int(request.form.get("duration_days") or (max_days or 3))
+            max_price = float(max_price_str.replace(",", "."))
         except ValueError:
-            duration_days = max_days or 3
+            max_price = None
 
-        if duration_days < 1:
-            duration_days = 1
+    if max_price is not None:
+        entries = [
+            e
+            for e in entries
+            if e["min_price"] is not None and e["min_price"] <= max_price
+        ]
 
-        if max_days and duration_days > max_days:
-            duration_days = max_days
+    # --- 4) Tri ---
+    def price_key(e):
+        # très cher si prix manquant
+        return e["min_price"] if e["min_price"] is not None else 999999
 
-        expires = now + timedelta(days=duration_days)
-        rental_id = get_next_id(data["rentals"])
+    def rating_key(e):
+        # 0 si pas de note vendeur
+        return e["seller_rating"] if e["seller_rating"] is not None else 0
 
-        # 5) Enregistrer la location (avec owner + format en bonus)
-        data.setdefault("rentals", []).append(
-            {
-                "id": rental_id,
-                "user_id": user_id,
-                "movie_id": film_id,
-                "owner_id": owner_id,
-                "format": fmt,  # "bluray" ou "digital"
-                "rented_at": now.isoformat(timespec="seconds"),
-                "expires_at": expires.isoformat(timespec="seconds"),
-                "price_cents": price_cents,
-            }
-        )
-        save_data(data)
+    if sort_by == "price_asc":
+        key_func, reverse = price_key, False
+    elif sort_by == "price_desc":
+        key_func, reverse = price_key, True
+    elif sort_by == "rating_desc":
+        key_func, reverse = rating_key, True
+    elif sort_by == "rating_asc":
+        key_func, reverse = rating_key, False
+    else:
+        key_func, reverse = price_key, False
 
-        flash("Location créée avec succès ✅", "success")
-        # On envoie direct sur l’onglet "Mes locations" du profil
-        return redirect(url_for("profile_locations"))
+    entries.sort(key=key_func, reverse=reverse)
 
-        # --- 3) Récupérer les filtres GET ---
-        format_filter = request.args.get("format", "all")  # all | bluray | digital | both
-        sort_by = request.args.get("sort_by", "price_asc")  # price_asc/desc, rating_asc/desc
-        max_price_str = request.args.get("max_price", "").strip()
+    return render_template(
+        "film_availability.html",
+        film=film,
+        entries=entries,
+        format_filter=format_filter,
+        sort_by=sort_by,
+        max_price=max_price_str,
+    )
 
-        # Filtre par format
-        if format_filter == "bluray":
-            entries = [e for e in entries if e["has_bluray"]]
-        elif format_filter == "digital":
-            entries = [e for e in entries if e["has_digital"]]
-        elif format_filter == "both":
-            entries = [e for e in entries if e["has_bluray"] and e["has_digital"]]
-        # sinon "all" → aucun filtre
 
-        # Filtre par prix max
-        max_price = None
-        if max_price_str:
-            try:
-                max_price = float(max_price_str.replace(",", "."))
-            except ValueError:
-                max_price = None
+@app.post("/films/<int:film_id>/rent-from-owner/<int:owner_id>")
+@login_required
+def rent_from_owner(film_id, owner_id):
+    """
+    Loue un exemplaire précis depuis la page 'Exemplaires disponibles'.
+    On enregistre :
+    - le film
+    - l'owner (propriétaire)
+    - le format choisi (bluray / digital)
+    - le prix renseigné par le propriétaire
+    - la durée (limitée par sa durée max)
+    La location apparaîtra ensuite dans 'Mes locations'.
+    """
+    data = load_data()
+    user_id = session["user_id"]
+    now = datetime.utcnow()
 
-        if max_price is not None:
-            entries = [
-                e
-                for e in entries
-                if e["min_price"] is not None and e["min_price"] <= max_price
-            ]
+    # 1) Vérifier si l'utilisateur a déjà une location active pour ce film
+    for r in data.get("rentals", []):
+        if r["user_id"] == user_id and r["movie_id"] == film_id:
+            last_expires = datetime.fromisoformat(r["expires_at"])
+            if last_expires > now:
+                flash(
+                    "Vous avez déjà une location active pour ce film "
+                    f"(jusqu’au {last_expires.strftime('%d/%m/%Y %H:%M')}).",
+                    "warning",
+                )
+                return redirect(url_for("film_availability", film_id=film_id))
 
-        # --- 4) Tri ---
-        def price_key(e):
-            # très cher si prix manquant
-            return e["min_price"] if e["min_price"] is not None else 999999
+    # 2) Retrouver l'exemplaire du propriétaire
+    own = None
+    for o in data.get("user_owns", []):
+        if (
+            o.get("user_id") == owner_id
+            and o.get("movie_id") == film_id
+            and o.get("is_public", False)
+        ):
+            own = o
+            break
 
-        def rating_key(e):
-            # 0 si pas de note vendeur
-            return e["seller_rating"] if e["seller_rating"] is not None else 0
+    if not own:
+        flash("Cet exemplaire n’est plus disponible.", "warning")
+        return redirect(url_for("film_availability", film_id=film_id))
 
-        reverse = False
-        if sort_by == "price_asc":
-            key_func = price_key
-            reverse = False
-        elif sort_by == "price_desc":
-            key_func = price_key
-            reverse = True
-        elif sort_by == "rating_desc":
-            key_func = rating_key
-            reverse = True
-        elif sort_by == "rating_asc":
-            key_func = rating_key
-            reverse = False
-        else:
-            key_func = price_key  # fallback
+    # 3) Récupérer le format choisi
+    fmt = request.form.get("format")
+    if fmt not in ("bluray", "digital"):
+        flash("Veuillez choisir un format à louer.", "warning")
+        return redirect(url_for("film_availability", film_id=film_id))
 
-        entries.sort(key=key_func, reverse=reverse)
+    if fmt == "bluray" and not own.get("has_bluray"):
+        flash("Ce propriétaire ne propose plus le Blu-ray.", "warning")
+        return redirect(url_for("film_availability", film_id=film_id))
 
-        return render_template(
-            "film_availability.html",
-            film=film,
-            entries=entries,
-            format_filter=format_filter,
-            sort_by=sort_by,
-            max_price=max_price_str,
-        )
+    if fmt == "digital" and not own.get("has_digital"):
+        flash("Ce propriétaire ne propose plus le streaming.", "warning")
+        return redirect(url_for("film_availability", film_id=film_id))
+
+    # 4) Récupérer prix et durée max selon le format
+    if fmt == "bluray":
+        price = own.get("bluray_price")
+        max_days = own.get("bluray_max_days")
+    else:
+        price = own.get("digital_price")
+        max_days = own.get("digital_max_days")
+
+    # fallback si jamais le prix n’est pas renseigné
+    if price is None:
+        price = own.get("bluray_price") or own.get("digital_price") or 3.99
+
+    price_cents = int(round(price * 100))
+
+    # Durée demandée par l’utilisateur (optionnelle)
+    try:
+        duration_days = int(request.form.get("duration_days") or (max_days or 3))
+    except ValueError:
+        duration_days = max_days or 3
+
+    if duration_days < 1:
+        duration_days = 1
+
+    if max_days and duration_days > max_days:
+        duration_days = max_days
+
+    expires = now + timedelta(days=duration_days)
+    rental_id = get_next_id(data["rentals"])
+
+    # 5) Enregistrer la location (avec owner + format en bonus)
+    data.setdefault("rentals", []).append(
+        {
+            "id": rental_id,
+            "user_id": user_id,
+            "movie_id": film_id,
+            "owner_id": owner_id,
+            "format": fmt,  # "bluray" ou "digital"
+            "rented_at": now.isoformat(timespec="seconds"),
+            "expires_at": expires.isoformat(timespec="seconds"),
+            "price_cents": price_cents,
+        }
+    )
+    save_data(data)
+
+    flash("Location créée avec succès ✅", "success")
+    # On envoie direct sur l’onglet "Mes locations" du profil
+    return redirect(url_for("profile_locations"))
 
 # ---------- Favoris (❤️) ----------
 
