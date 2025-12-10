@@ -1,300 +1,166 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="availability-page">
+<div class="container my-5">
 
-  {# ---------- HEADER ---------- #}
-  <header class="availability-header">
-    <h1>Exemplaires disponibles — {{ film.titre }}</h1>
-    <p>
-      Voici les utilisateurs qui possèdent ce film dans leur vidéothèque
-      et qui le proposent éventuellement à la location.
+    <!-- HEADER -->
+    <h1 class="text-white mb-2">Exemplaires disponibles — {{ film.titre }}</h1>
+    <p class="text-light mb-4">
+        Voici les utilisateurs qui possèdent ce film et le proposent éventuellement à la location.
     </p>
-  </header>
 
-  {# ---------- FILTRES (UNE LIGNE, SANS PRIX MAX) ---------- #}
-  <div class="mb-4">
-    <form method="get" class="row g-3 align-items-end availability-filters">
-      <div class="col-md-4">
-        <label class="form-label" for="format-select">Format</label>
-        <select id="format-select" name="format" class="form-select">
-          <option value="all"     {{ "selected" if format_filter == "all"     else "" }}>Tous</option>
-          <option value="bluray"  {{ "selected" if format_filter == "bluray"  else "" }}>Blu-ray</option>
-          <option value="digital" {{ "selected" if format_filter == "digital" else "" }}>Streaming</option>
-          <option value="both"    {{ "selected" if format_filter == "both"    else "" }}>Blu-ray + Streaming</option>
-        </select>
-      </div>
+    <!-- FILTRES -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label text-light">Format</label>
+            <select name="format" class="form-select">
+                <option value="all"     {{ "selected" if format_filter == "all" else "" }}>Tous</option>
+                <option value="bluray"  {{ "selected" if format_filter == "bluray" else "" }}>Blu-ray</option>
+                <option value="digital" {{ "selected" if format_filter == "digital" else "" }}>Streaming</option>
+            </select>
+        </div>
 
-      <div class="col-md-4">
-        <label class="form-label" for="sort-by-select">Trier par</label>
-        <select id="sort-by-select" name="sort_by" class="form-select">
-          <option value="price_asc"   {{ "selected" if sort_by == "price_asc"   else "" }}>Prix croissant</option>
-          <option value="price_desc"  {{ "selected" if sort_by == "price_desc"  else "" }}>Prix décroissant</option>
-          <option value="rating_desc" {{ "selected" if sort_by == "rating_desc" else "" }}>Note vendeur décroissante</option>
-          <option value="rating_asc"  {{ "selected" if sort_by == "rating_asc"  else "" }}>Note vendeur croissante</option>
-        </select>
-      </div>
+        <div class="col-md-4">
+            <label class="form-label text-light">Trier par</label>
+            <select name="sort_by" class="form-select">
+                <option value="price_asc"  {{ "selected" if sort_by == "price_asc" else "" }}>Prix croissant</option>
+                <option value="price_desc" {{ "selected" if sort_by == "price_desc" else "" }}>Prix décroissant</option>
+            </select>
+        </div>
 
-      <div class="col-md-4 col-lg-3">
-        <button type="submit" class="btn btn-popcorn-primary w-100">
-          Filtrer
-        </button>
-      </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button class="btn btn-warning w-100 fw-semibold">Filtrer</button>
+        </div>
     </form>
-  </div>
 
-  {# ---------- LISTE DES EXEMPLAIRES ---------- #}
-  {% if entries %}
-    <div class="availability-list">
-      {% for e in entries %}
-        <article class="availability-card">
 
-          <div class="availability-card-main">
-            {# --- bloc gauche : vendeur + infos formats --- #}
-            <div class="availability-info">
-              <div class="availability-owner-name">
-                {{ e.owner_name }}
-              </div>
+    <!-- LISTE DES EXEMPLAIRES -->
+    {% for e in entries %}
+    <div class="p-4 mb-4 rounded-4" style="background:#1b1d22; border:1px solid #333;">
 
-              <div class="availability-prices">
-                {% if e.has_bluray %}
-                  <div class="availability-line">
-                    <span class="availability-format-tag">Blu-ray</span>
-                    <span class="availability-price">
-                      {% if e.bluray_price is not none %}
-                        {{ '%.2f'|format(e.bluray_price) }} €
-                      {% else %}
-                        prix non renseigné
-                      {% endif %}
-                    </span>
-                    {% if e.bluray_max_days %}
-                      <span class="availability-days">• {{ e.bluray_max_days }} j max</span>
-                    {% endif %}
-                  </div>
-                {% endif %}
+        <!-- VENDEUR -->
+        <div class="d-flex align-items-center mb-2">
 
-                {% if e.has_digital %}
-                  <div class="availability-line">
-                    <span class="availability-format-tag">Streaming</span>
-                    <span class="availability-price">
-                      {% if e.digital_price is not none %}
-                        {{ '%.2f'|format(e.digital_price) }} €
-                      {% else %}
-                        prix non renseigné
-                      {% endif %}
-                    </span>
-                    {% if e.digital_max_days %}
-                      <span class="availability-days">• {{ e.digital_max_days }} j max</span>
-                    {% endif %}
-                  </div>
-                {% endif %}
-              </div>
+            <div class="rounded-circle d-flex align-items-center justify-content-center me-2"
+                 style="width:34px;height:34px;background:#f8b400;color:#000;font-weight:700;">
+                {{ e.owner_name[0]|upper }}
             </div>
 
-            {# --- bloc droite : boutons louer --- #}
-            <div class="availability-actions">
-              {% if e.has_bluray %}
-                <button
-                  type="button"
-                  class="btn btn-popcorn-primary availability-rent-btn"
-                  data-open-modal="rent-owner-{{ e.owner_id }}-bluray"
-                >
-                  Louer le Blu-ray
-                </button>
-              {% endif %}
-              {% if e.has_digital %}
-                <button
-                  type="button"
-                  class="btn btn-popcorn-primary availability-rent-btn"
-                  data-open-modal="rent-owner-{{ e.owner_id }}-digital"
-                >
-                  Louer en streaming
-                </button>
-              {% endif %}
-            </div>
-          </div>
+            <h5 class="text-white mb-0">{{ e.owner_name }}</h5>
+        </div>
 
-          {# ---------- MODALES : UNE PAR FORMAT DISPONIBLE ---------- #}
+        <!-- FORMATS DISPONIBLES -->
+        {% if e.has_bluray %}
+            <p class="text-light mb-1">
+                <strong>Blu-ray :</strong>
+                {{ "%.2f"|format(e.bluray_price) }} € • {{ e.bluray_max_days }} j max
+            </p>
+        {% endif %}
 
-          {% if e.has_bluray %}
-            <div
-              class="ph-modal-backdrop"
-              id="modal-rent-owner-{{ e.owner_id }}-bluray"
-              style="display:none;"
-            >
-              <div class="modal-card">
-                <div class="modal-header">
-                  <h2 class="modal-title">
-                    Louer « {{ film.titre }} » en Blu-ray chez {{ e.owner_name }}
-                  </h2>
-                </div>
+        {% if e.has_digital %}
+            <p class="text-light mb-3">
+                <strong>Streaming :</strong>
+                {{ "%.2f"|format(e.digital_price) }} € • {{ e.digital_max_days }} j max
+            </p>
+        {% endif %}
 
-                <form
-                  method="post"
-                  action="{{ url_for('rent_from_owner', film_id=film.id, owner_id=e.owner_id) }}"
-                >
-                  <input type="hidden" name="format" value="bluray" />
+        <!-- BOUTONS LOUER -->
+        <div class="d-flex gap-3">
 
-                  <div class="modal-body">
-                    <p>
-                      Prix&nbsp;:
-                      {% if e.bluray_price is not none %}
-                        {{ '%.2f'|format(e.bluray_price) }} €
-                      {% else %}
-                        non renseigné
-                      {% endif %}
-                      {% if e.bluray_max_days %}
-                        • durée max&nbsp;: {{ e.bluray_max_days }} jours
-                      {% endif %}
-                    </p>
+            {% if e.has_bluray %}
+            <button class="btn btn-warning fw-semibold"
+                    data-bs-toggle="modal"
+                    data-bs-target="#rentBluray-{{ e.owner_id }}">
+                Louer le Blu-ray
+            </button>
+            {% endif %}
 
-                    <div class="mb-3">
-                      <label for="duration-{{ e.owner_id }}-bluray">
-                        Durée de location (jours)
-                      </label>
-                      <input
-                        id="duration-{{ e.owner_id }}-bluray"
-                        type="number"
-                        name="duration_days"
-                        class="form-control"
-                        min="1"
-                        placeholder="ex : 3"
-                      />
-                      <small class="form-hint">
-                        Si vous laissez vide, la durée max proposée par le propriétaire sera utilisée.
-                      </small>
-                    </div>
-                  </div>
+            {% if e.has_digital %}
+            <button class="btn btn-warning fw-semibold"
+                    data-bs-toggle="modal"
+                    data-bs-target="#rentDigital-{{ e.owner_id }}">
+                Louer en streaming
+            </button>
+            {% endif %}
+        </div>
 
-                  <div class="modal-footer">
-                    <button
-                      type="button"
-                      class="btn btn-popcorn-secondary"
-                      data-close-modal="rent-owner-{{ e.owner_id }}-bluray"
-                    >
-                      Annuler
-                    </button>
-                    <button type="submit" class="btn btn-popcorn-primary">
-                      Confirmer la location
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          {% endif %}
-
-          {% if e.has_digital %}
-            <div
-              class="ph-modal-backdrop"
-              id="modal-rent-owner-{{ e.owner_id }}-digital"
-              style="display:none;"
-            >
-              <div class="modal-card">
-                <div class="modal-header">
-                  <h2 class="modal-title">
-                    Louer « {{ film.titre }} » en streaming chez {{ e.owner_name }}
-                  </h2>
-                </div>
-
-                <form
-                  method="post"
-                  action="{{ url_for('rent_from_owner', film_id=film.id, owner_id=e.owner_id) }}"
-                >
-                  <input type="hidden" name="format" value="digital" />
-
-                  <div class="modal-body">
-                    <p>
-                      Prix&nbsp;:
-                      {% if e.digital_price is not none %}
-                        {{ '%.2f'|format(e.digital_price) }} €
-                      {% else %}
-                        non renseigné
-                      {% endif %}
-                      {% if e.digital_max_days %}
-                        • durée max&nbsp;: {{ e.digital_max_days }} jours
-                      {% endif %}
-                    </p>
-
-                    <div class="mb-3">
-                      <label for="duration-{{ e.owner_id }}-digital">
-                        Durée de location (jours)
-                      </label>
-                      <input
-                        id="duration-{{ e.owner_id }}-digital"
-                        type="number"
-                        name="duration_days"
-                        class="form-control"
-                        min="1"
-                        placeholder="ex : 3"
-                      />
-                      <small class="form-hint">
-                        Si vous laissez vide, la durée max proposée par le propriétaire sera utilisée.
-                      </small>
-                    </div>
-                  </div>
-
-                  <div class="modal-footer">
-                    <button
-                      type="button"
-                      class="btn btn-popcorn-secondary"
-                      data-close-modal="rent-owner-{{ e.owner_id }}-digital"
-                    >
-                      Annuler
-                    </button>
-                    <button type="submit" class="btn btn-popcorn-primary">
-                      Confirmer la location
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          {% endif %}
-
-        </article>
-      {% endfor %}
     </div>
-  {% else %}
-    <p class="availability-empty">
-      Aucun exemplaire disponible pour le moment.
-    </p>
-  {% endif %}
+
+    <!-- MODAL BLU-RAY -->
+    {% if e.has_bluray %}
+    <div class="modal fade" id="rentBluray-{{ e.owner_id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="post"
+                  action="{{ url_for('rent_from_owner', film_id=film.id, owner_id=e.owner_id) }}"
+                  class="modal-content bg-dark text-light rounded-4 shadow-lg border-0">
+
+                <div class="modal-header border-0" style="background:#111;">
+                    <h5 class="modal-title">
+                        Louer « {{ film.titre }} » en Blu-ray chez {{ e.owner_name }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p class="mb-1">Prix : {{ "%.2f"|format(e.bluray_price) }} € — durée max : {{ e.bluray_max_days }} jours</p>
+
+                    <label class="form-label mt-3">Durée de location (jours)</label>
+                    <input type="number" name="duration_days"
+                           class="form-control"
+                           placeholder="ex : 3" min="1">
+
+                    <input type="hidden" name="format" value="bluray">
+                </div>
+
+                <div class="modal-footer border-0" style="background:#111;">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning fw-semibold">Confirmer la location</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- MODAL STREAMING -->
+    {% if e.has_digital %}
+    <div class="modal fade" id="rentDigital-{{ e.owner_id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="post"
+                  action="{{ url_for('rent_from_owner', film_id=film.id, owner_id=e.owner_id) }}"
+                  class="modal-content bg-dark text-light rounded-4 shadow-lg border-0">
+
+                <div class="modal-header border-0" style="background:#111;">
+                    <h5 class="modal-title">
+                        Louer « {{ film.titre }} » en streaming chez {{ e.owner_name }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p class="mb-1">Prix : {{ "%.2f"|format(e.digital_price) }} € — durée max : {{ e.digital_max_days }} jours</p>
+
+                    <label class="form-label mt-3">Durée de location (jours)</label>
+                    <input type="number" name="duration_days"
+                           class="form-control"
+                           placeholder="ex : 3" min="1">
+
+                    <input type="hidden" name="format" value="digital">
+                </div>
+
+                <div class="modal-footer border-0" style="background:#111;">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning fw-semibold">Confirmer la location</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    {% endfor %}
 
 </div>
-
-{# ---------- JS : OUVERTURE / FERMETURE DES MODALES ---------- #}
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const openButtons = document.querySelectorAll("[data-open-modal]");
-    const closeButtons = document.querySelectorAll("[data-close-modal]");
-    const backdrops = document.querySelectorAll(".ph-modal-backdrop");
-
-    openButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = btn.getAttribute("data-open-modal");
-        const modal = document.getElementById("modal-" + id);
-        if (modal) {
-          modal.style.display = "flex";
-        }
-      });
-    });
-
-    closeButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = btn.getAttribute("data-close-modal");
-        const modal = document.getElementById("modal-" + id);
-        if (modal) {
-          modal.style.display = "none";
-        }
-      });
-    });
-
-    backdrops.forEach((backdrop) => {
-      backdrop.addEventListener("click", (event) => {
-        if (event.target === backdrop) {
-          backdrop.style.display = "none";
-        }
-      });
-    });
-  });
-</script>
 {% endblock %}

@@ -2,58 +2,96 @@
 {% block title %}Mes locations{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Mes locations</h1>
+<div class="container my-4">
+  <h1 class="mb-4">Mes locations</h1>
 
-{% if rentals %}
-  <table class="table table-dark table-striped align-middle">
-    <thead>
-      <tr>
-        <th>Film</th>
-        <th>Période</th>
-        <th>Prix</th>
-        <th>État</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
+  {% if rentals and rentals|length > 0 %}
+
+    <div class="profile-rentals-grid">
       {% for r in rentals %}
-        <tr>
-          <td>
-            <strong>{{ r.titre }}</strong><br>
-            <small>{{ r.annee }} • {{ r.realisateur }}</small>
-          </td>
-          <td>
-            <small>
-              Du {{ r.rented_at[:16].replace('T',' ') }}<br>
-              au {{ r.expires_at[:16].replace('T',' ') }}
-            </small>
-          </td>
-          <td>{{ "%.2f"|format(r.price_eur) }}&nbsp;€</td>
-          <td>
-            {% if r.is_active %}
-              <span class="badge bg-success">Active</span>
+        <article class="profile-rental-card">
+
+          <!-- Affiche -->
+          <div class="profile-rental-poster">
+            {% set poster = r.poster_url or r.affiche_url %}
+            {% if poster %}
+              <img src="{{ poster }}"
+                   alt="Affiche de {{ r.titre }}"
+                   class="img-fluid rounded-3">
             {% else %}
-              <span class="badge bg-secondary">Expirée</span>
+              <div class="profile-rental-poster-placeholder">
+                <span>Affiche indisponible</span>
+              </div>
             {% endif %}
-          </td>
-          <td class="text-end">
-            {% if r.is_active %}
-              <a href="{{ url_for('watch_film', film_id=r.film_id) }}" class="btn btn-popcorn-primary btn-sm">
-                ▶ Regarder
-              </a>
-            {% else %}
-              <form action="{{ url_for('rent_film', film_id=r.film_id) }}" method="post" class="d-inline">
-                <button class="btn btn-outline-light btn-sm">
+          </div>
+
+          <!-- Contenu -->
+          <div class="profile-rental-body">
+
+            <h2 class="profile-rental-title">
+              {{ r.titre }}
+              {% if r.annee %}
+                <span class="text-muted">({{ r.annee }})</span>
+              {% endif %}
+            </h2>
+
+            {% if r.realisateur %}
+              <p class="text-light mb-1 small">
+                Réalisateur : {{ r.realisateur }}
+              </p>
+            {% endif %}
+
+            <p class="profile-rental-dates mb-1 small">
+              Loué le
+              <strong>{{ r.rented_at[:16].replace('T',' ') }}</strong>
+              – jusqu'au
+              <strong>{{ r.expires_at[:16].replace('T',' ') }}</strong>
+            </p>
+
+            <p class="mb-2 small">
+              {% if r.is_active %}
+                <span class="badge bg-success">En cours</span>
+              {% else %}
+                <span class="badge bg-secondary">Expirée</span>
+              {% endif %}
+
+              <span class="profile-rental-price text-light ms-2">
+                {{ "%.2f"|format(r.price_eur) }} €
+              </span>
+            </p>
+
+            <div class="d-flex gap-2 mt-3">
+
+              {% if r.is_active %}
+
+                <!-- Bouton Rendre -->
+                <form method="post"
+                      action="{{ url_for('return_rental', rental_id=r.id) }}"
+                      class="flex-grow-1">
+                  <button type="submit"
+                          class="btn btn-danger w-100 fw-semibold">
+                    Rendre
+                  </button>
+                </form>
+
+              {% else %}
+                <!-- Location expirée : proposer de relouer (renvoie vers la fiche du film) -->
+                <a href="{{ url_for('film_detail', film_id=r.film_id) }}"
+                   class="btn btn-outline-light w-100 flex-grow-1">
                   Relouer
-                </button>
-              </form>
-            {% endif %}
-          </td>
-        </tr>
+                </a>
+              {% endif %}
+
+            </div>
+
+          </div>
+
+        </article>
       {% endfor %}
-    </tbody>
-  </table>
-{% else %}
-  <p>Vous n'avez pas encore loué de films.</p>
-{% endif %}
+    </div>
+
+  {% else %}
+    <p class="text-light">Vous n'avez pas encore loué de films.</p>
+  {% endif %}
+</div>
 {% endblock %}

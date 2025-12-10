@@ -137,13 +137,12 @@
                                 <div class="d-flex justify-content-between align-items-center gap-2">
                                     <!-- Supprimer -->
                                     <form method="post"
-                                          action="{{ url_for('update_library_item', film_id=film.id) }}"
-                                          onsubmit="return confirm('Retirer ce film de votre vidéothèque ?');">
-                                        <input type="hidden" name="delete" value="1">
-                                        <button type="submit"
-                                                class="btn btn-xs btn-outline-danger">
-                                            Supprimer
-                                        </button>
+                                          action="{{ url_for('delete_library_item', film_id=item.film_id) }}"
+                                          class="flex-grow-1">
+                                      <button type="submit"
+                                              class="btn btn-danger w-100 fw-semibold">
+                                        Supprimer
+                                      </button>
                                     </form>
 
                                     <!-- Modifier -->
@@ -322,12 +321,6 @@
                                 <span class="rental-price">
                                     {{ '%.2f'|format(r.price_eur) }} €
                                 </span>
-                                {% if r.is_active %}
-                                    <a href="{{ url_for('watch_film', film_id=r.film_id) }}"
-                                       class="btn btn-xs btn-primary">
-                                        Regarder
-                                    </a>
-                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}

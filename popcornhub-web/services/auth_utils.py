@@ -1,0 +1,13 @@
+from functools import wraps
+from flask import session, redirect, url_for, request
+
+
+def login_required(view):
+    """Décorateur simple pour forcer la connexion."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login", next=request.path))
+        return view(*args, **kwargs)
+
+    return wrapped
