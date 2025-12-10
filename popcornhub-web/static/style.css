@@ -685,30 +685,30 @@ p, span, li, label {
   border: 1px solid rgba(148, 163, 184, 0.3);
 }
 
-@media (min-width: 992px) {
-  .availability-filters form {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1fr) auto;
-    column-gap: 0.9rem;
-    align-items: flex-end;
-  }
-
-  .availability-filters form > .mb-3,
-  .availability-filters form > .form-group {
-    margin-bottom: 0;
-  }
-}
-
-.availability-filters-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 1fr) auto;
+/* Ligne de filtres : champs côte à côte sur desktop */
+.availability-filters form {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.9rem;
   align-items: flex-end;
 }
 
-@media (max-width: 992px) {
-  .availability-filters-row {
-    grid-template-columns: 1fr;
+.availability-filters form > .mb-3,
+.availability-filters form > .form-group {
+  flex: 1 1 0;
+  margin-bottom: 0;
+}
+
+/* Sur mobile, repasser en colonne */
+@media (max-width: 768px) {
+  .availability-filters form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .availability-filters form > .mb-3,
+  .availability-filters form > .form-group {
+    width: 100%;
   }
 }
 
@@ -743,8 +743,9 @@ p, span, li, label {
 }
 
 .availability-filters .btn-popcorn-primary {
+  flex: 0 0 auto;
   height: 2.7rem;
-  margin-top: 1.35rem;
+  padding-inline: 2.4rem;
   box-shadow: 0 10px 25px rgba(251, 146, 60, 0.5);
 }
 
@@ -757,6 +758,7 @@ p, span, li, label {
 }
 
 .availability-card {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -845,13 +847,30 @@ p, span, li, label {
   color: #e5e7eb;
 }
 
-/* Partie droite : badge prix mini */
+/* Rendre les labels de formats plus lisibles façon tags */
+.availability-card strong {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  margin-right: 0.45rem;
+}
 
+/* Partie droite : badge prix mini */
 .availability-price-tag {
+  position: absolute;
+  top: 50%;
+  right: 1.6rem;
+  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.48rem 1.2rem;
+  padding: 0.48rem 1.6rem;
   border-radius: 999px;
   background: linear-gradient(135deg, #fb923c, #facc15);
   color: #111827;
@@ -859,7 +878,6 @@ p, span, li, label {
   font-size: 0.95rem;
   white-space: nowrap;
   box-shadow: 0 10px 25px rgba(251, 146, 60, 0.75);
-  margin-left: auto;
   cursor: pointer;
 }
 
