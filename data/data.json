@@ -54,6 +54,46 @@
       "price_cents": 249,
       "rented_at": "2025-12-12T10:07:20",
       "user_id": 2
+    },
+    {
+      "expires_at": "2025-12-15T10:52:23",
+      "format": "digital",
+      "id": 6,
+      "movie_id": 1084242,
+      "owner_id": 2,
+      "price_cents": 399,
+      "rented_at": "2025-12-12T10:52:23",
+      "user_id": 5
+    },
+    {
+      "expires_at": "2025-12-12T11:20:56",
+      "format": "digital",
+      "id": 7,
+      "movie_id": 1084242,
+      "owner_id": 1,
+      "price_cents": 249,
+      "rented_at": "2025-12-12T11:06:40",
+      "user_id": 3
+    },
+    {
+      "expires_at": "2025-12-12T11:20:54",
+      "format": "bluray",
+      "id": 8,
+      "movie_id": 1084242,
+      "owner_id": 2,
+      "price_cents": 250,
+      "rented_at": "2025-12-12T11:20:44",
+      "user_id": 3
+    },
+    {
+      "id": 9,
+      "user_id": 3,
+      "movie_id": 1084242,
+      "owner_id": 1,
+      "format": "digital",
+      "rented_at": "2025-12-12T11:21:08",
+      "expires_at": "2025-12-15T11:21:08",
+      "price_cents": 249
     }
   ],
   "reviews": [
@@ -128,6 +168,17 @@
       "has_digital": true,
       "is_public": false,
       "movie_id": 1419406,
+      "user_id": 2
+    },
+    {
+      "bluray_max_days": 5,
+      "bluray_price": 2.5,
+      "digital_max_days": 7,
+      "digital_price": 3.99,
+      "has_bluray": true,
+      "has_digital": true,
+      "is_public": true,
+      "movie_id": 1084242,
       "user_id": 2
     }
   ],

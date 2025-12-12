@@ -29,13 +29,25 @@ from services.auth_utils import login_required
 
 films_bp = Blueprint("films_bp", __name__)
 
-def _active_rental_until(data, owner_id: int, movie_id: int, now: datetime | None = None):
+def _active_rental_until(
+    data,
+    owner_id: int,
+    movie_id: int,
+    fmt: str | None = None,
+    now: datetime | None = None,
+):
+    """Return latest active expires_at for an owner/movie.
+
+    If `fmt` is provided ("bluray" or "digital"), only rentals for that format are considered.
+    """
     if now is None:
         now = datetime.utcnow()
 
     latest = None
     for r in data.get("rentals", []):
         if r.get("owner_id") != owner_id or r.get("movie_id") != movie_id:
+            continue
+        if fmt is not None and r.get("format") != fmt:
             continue
         try:
             expires = datetime.fromisoformat(r.get("expires_at"))
@@ -46,8 +58,6 @@ def _active_rental_until(data, owner_id: int, movie_id: int, now: datetime | Non
         if latest is None or expires > latest:
             latest = expires
     return latest
-
-# ---------- Page filmographie acteur ----------
 
 @films_bp.route("/actors/<actor_name>", endpoint="actor_films")
 def actor_films(actor_name):
@@ -82,8 +92,6 @@ def actor_films(actor_name):
         actor_bio=actor_bio,
         films=films_for_actor,
     )
-
-# ---------- Détail d'un film ----------
 
 @films_bp.route("/films/<int:film_id>", endpoint="film_detail")
 def film_detail(film_id):
@@ -176,8 +184,6 @@ def film_detail(film_id):
         ownership_for_user=ownership_for_user,
         owners_count=owners_count,
     )
-
-# ---------- Déclarer possession d'un film ----------
 
 @films_bp.post("/films/<int:film_id>/own", endpoint="own_film")
 @login_required
@@ -302,9 +308,26 @@ def film_availability(film_id):
     users_by_id = {u["id"]: u for u in data.get("users", [])}
     now = datetime.utcnow()
 
+    active_rentals = {}
+    for r in data.get("rentals", []):
+        try:
+            expires = datetime.fromisoformat(r["expires_at"])
+        except Exception:
+            continue
+
+        if expires <= now:
+            continue
+
+        fmt = r.get("format")
+        if fmt not in ("bluray", "digital"):
+            continue
+
+        key = (r.get("owner_id"), r.get("movie_id"), fmt)
+        if key not in active_rentals or expires > active_rentals[key]:
+            active_rentals[key] = expires
+
     ownerships_raw = [
-        o
-        for o in data.get("user_owns", [])
+        o for o in data.get("user_owns", [])
         if o.get("movie_id") == film_id and o.get("is_public", False)
     ]
 
@@ -326,14 +349,15 @@ def film_availability(film_id):
         prices = [p for p in (bluray_price, digital_price) if p is not None]
         min_price = min(prices) if prices else None
 
-        seller_rating = own.get("seller_rating")  # placeholder
+        seller_rating = own.get("seller_rating")  
 
-        unavailable_until = _active_rental_until(data, own["user_id"], film_id, now=now)
-        is_available = unavailable_until is None
+        bluray_unavailable_until = active_rentals.get((own["user_id"], film_id, "bluray"))
+        digital_unavailable_until = active_rentals.get((own["user_id"], film_id, "digital"))
 
-        available_in_days = None
-        if unavailable_until:
-            available_in_days = max(0, (unavailable_until.date() - now.date()).days)
+        bluray_available = has_bluray and bluray_unavailable_until is None
+        digital_available = has_digital and digital_unavailable_until is None
+
+        is_available = bluray_available or digital_available
 
         entries.append(
             {
@@ -347,15 +371,23 @@ def film_availability(film_id):
                 "digital_max_days": own.get("digital_max_days"),
                 "min_price": min_price,
                 "seller_rating": seller_rating,
+
                 "is_available": is_available,
-                "available_at": (
-                    unavailable_until.strftime("%d/%m/%Y")
-                    if unavailable_until
+                "bluray_available": bluray_available,
+                "digital_available": digital_available,
+                "bluray_available_at": (
+                    bluray_unavailable_until.strftime("%d/%m/%Y %H:%M")
+                    if bluray_unavailable_until
                     else None
                 ),
-                "available_in_days": available_in_days,
+                "digital_available_at": (
+                    digital_unavailable_until.strftime("%d/%m/%Y %H:%M")
+                    if digital_unavailable_until
+                    else None
+                ),
             }
         )
+
 
     format_filter = request.args.get("format", "all")
     sort_by = request.args.get("sort_by", "price_asc")
@@ -377,8 +409,7 @@ def film_availability(film_id):
 
     if max_price is not None:
         entries = [
-            e
-            for e in entries
+            e for e in entries
             if e["min_price"] is not None and e["min_price"] <= max_price
         ]
 
@@ -422,25 +453,7 @@ def rent_from_owner(film_id, owner_id):
     user_id = session["user_id"]
     now = datetime.utcnow()
 
-    busy_until = _active_rental_until(data, owner_id, film_id, now=now)
-    if busy_until:
-        flash(
-            "Cet exemplaire est déjà loué. "
-            f"Disponible à partir du {busy_until.strftime('%d/%m/%Y') }.",
-            "warning",
-        )
-        return redirect(url_for("films_bp.film_availability", film_id=film_id))
 
-    for r in data.get("rentals", []):
-        if r["user_id"] == user_id and r["movie_id"] == film_id:
-            last_expires = datetime.fromisoformat(r["expires_at"])
-            if last_expires > now:
-                flash(
-                    "Vous avez déjà une location active pour ce film "
-                    f"(jusqu’au {last_expires.strftime('%d/%m/%Y %H:%M')}).",
-                    "warning",
-                )
-                return redirect(url_for("films_bp.film_availability", film_id=film_id))
 
     own = None
     for o in data.get("user_owns", []):
@@ -461,12 +474,40 @@ def rent_from_owner(film_id, owner_id):
         flash("Veuillez choisir un format à louer.", "warning")
         return redirect(url_for("films_bp.film_availability", film_id=film_id))
 
+    for r in data.get("rentals", []):
+        if r.get("user_id") != user_id or r.get("movie_id") != film_id:
+            continue
+        if r.get("format") != fmt:
+            continue
+        try:
+            last_expires = datetime.fromisoformat(r.get("expires_at"))
+        except Exception:
+            continue
+        if last_expires > now:
+            label = "Blu-ray" if fmt == "bluray" else "Streaming"
+            flash(
+                f"Vous avez déjà une location active ({label}) pour ce film "
+                f"(jusqu’au {last_expires.strftime('%d/%m/%Y %H:%M')}).",
+                "warning",
+            )
+            return redirect(url_for("films_bp.film_availability", film_id=film_id))
+
     if fmt == "bluray" and not own.get("has_bluray"):
         flash("Ce propriétaire ne propose plus le Blu-ray.", "warning")
         return redirect(url_for("films_bp.film_availability", film_id=film_id))
 
     if fmt == "digital" and not own.get("has_digital"):
         flash("Ce propriétaire ne propose plus le streaming.", "warning")
+        return redirect(url_for("films_bp.film_availability", film_id=film_id))
+
+    busy_until = _active_rental_until(data, owner_id, film_id, fmt=fmt, now=now)
+    if busy_until:
+        label = "Blu-ray" if fmt == "bluray" else "Streaming"
+        flash(
+            f"Cet exemplaire ({label}) est déjà loué. "
+            f"Disponible à partir du {busy_until.strftime('%d/%m/%Y') }.",
+            "warning",
+        )
         return redirect(url_for("films_bp.film_availability", film_id=film_id))
 
     if fmt == "bluray":
@@ -493,9 +534,10 @@ def rent_from_owner(film_id, owner_id):
         duration_days = max_days
 
     expires = now + timedelta(days=duration_days)
-    rental_id = get_next_id(data["rentals"])
+    rentals_list = data.setdefault("rentals", [])
+    rental_id = get_next_id(rentals_list)
 
-    data.setdefault("rentals", []).append(
+    rentals_list.append(
         {
             "id": rental_id,
             "user_id": user_id,

@@ -55,7 +55,12 @@
                     {{ e.owner_name }}
                   </div>
 
-                  {% if e.is_available %}
+            
+                  {% set bluray_ok = (e.bluray_is_available if e.bluray_is_available is defined else (e.bluray_available if e.bluray_available is defined else false)) %}
+                  {% set digital_ok = (e.digital_is_available if e.digital_is_available is defined else (e.digital_available if e.digital_available is defined else false)) %}
+                  {% set any_available = (bluray_ok or digital_ok) %}
+
+                  {% if any_available %}
                     <span class="badge rounded-pill"
                           style="background: rgba(25,135,84,.15); border:1px solid rgba(25,135,84,.45); color:#4cd07a;">
                       Disponible
@@ -80,21 +85,30 @@
                   {% endif %}
                 </div>
 
-                {% if not e.is_available %}
+                {% if e.has_bluray and (not bluray_ok) %}
                   <div class="mt-2" style="color:#ff6b7a; opacity:1; font-weight:600;">
-                    Disponible à partir du <strong>{{ e.available_at }}</strong>
-                    {% if e.available_in_days is not none %}
+                    Blu-ray disponible à partir du <strong>{{ e.bluray_available_at if e.bluray_available_at is defined and e.bluray_available_at else (e.available_at if e.available_at else '') }}</strong>
+                    {% if e.bluray_available_in_days is defined and e.bluray_available_in_days is not none %}
                       <span style="opacity:.85; font-weight:500;">
-                        (dans {{ e.available_in_days }} jour{% if e.available_in_days != 1 %}s{% endif %})
+                        (dans {{ e.bluray_available_in_days }} jour{% if e.bluray_available_in_days != 1 %}s{% endif %})
+                      </span>
+                    {% endif %}
+                  </div>
+                {% endif %}
+
+                {% if e.has_digital and (not digital_ok) %}
+                  <div class="mt-2" style="color:#ff6b7a; opacity:1; font-weight:600;">
+                    Streaming disponible à partir du <strong>{{ e.digital_available_at if e.digital_available_at is defined and e.digital_available_at else (e.available_at if e.available_at else '') }}</strong>
+                    {% if e.digital_available_in_days is defined and e.digital_available_in_days is not none %}
+                      <span style="opacity:.85; font-weight:500;">
+                        (dans {{ e.digital_available_in_days }} jour{% if e.digital_available_in_days != 1 %}s{% endif %})
                       </span>
                     {% endif %}
                   </div>
                 {% endif %}
 
                 <div class="mt-3 d-flex flex-wrap gap-2">
-                  {% if e.is_available %}
-
-                    {% if e.has_bluray %}
+                    {% if e.has_bluray and bluray_ok %}
                       <button type="button"
                               class="btn btn-warning fw-semibold"
                               data-bs-toggle="modal"
@@ -150,7 +164,7 @@
                       </div>
                     {% endif %}
 
-                    {% if e.has_digital %}
+                    {% if e.has_digital and digital_ok %}
                       <button type="button"
                               class="btn btn-warning fw-semibold"
                               data-bs-toggle="modal"
@@ -210,8 +224,6 @@
                       <span class="text-light" style="opacity:.7;">Aucun format proposé.</span>
                     {% endif %}
 
-                  {% else %}
-                  {% endif %}
                 </div>
 
               </div>
