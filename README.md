@@ -116,7 +116,6 @@ PopCornHub/
 
 - Docker
 - Docker Compose
-- Une clé API **TMDb**
 
 ## ▶️ Installation & lancement
 
