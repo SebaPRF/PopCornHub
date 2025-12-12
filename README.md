@@ -140,7 +140,12 @@ docker-compose up --build
 4) Ouvrir l’application
 
 - **Web** : `http://localhost:8080`
-- **API** : `http://localhost:5000` (principalement utilisée par le web)
+- **API** : `http://localhost:5000` 
+
+- **Depuis une autre machine (PC personnel)** : 
+  - **Web** : `http://<IP_DU_SERVEUR>:8080` 
+  - **API** : `http://<IP_DU_SERVEUR>:5000` 
+> Exemple : `http://10.11.37.1:8080`
 
 ---
 
