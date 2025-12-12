@@ -11,7 +11,6 @@ Les fiches films (affiche, synopsis, casting, bande‑annonce…) sont récupér
 - [Fonctionnalités](#-fonctionnalités)
 - [Architecture du projet](#️-architecture-du-projet)
 - [Prérequis](#-prérequis)
-- [Configuration TMDb](#-configuration-tmdb)
 - [Installation & lancement](#-installation--lancement)
 - [Gestion des données](#️-gestion-des-données)
 - [Utilisation rapide](#-utilisation-rapide)
@@ -57,7 +56,6 @@ L’objectif est de proposer une application **fonctionnelle**, **cohérente** e
 ### 👤 Utilisateurs
 - Création de compte
 - Connexion / Déconnexion
-- Pas de compte administrateur (inutile pour le projet)
 
 ---
 
@@ -119,22 +117,6 @@ PopCornHub/
 - Docker
 - Docker Compose
 - Une clé API **TMDb**
-
----
-
-## 🔑 Configuration TMDb
-
-L’application utilise TMDb : il faut donc fournir une clé API.
-
-Le plus simple : créer un fichier `.env` à la racine du projet :
-
-```bash
-TMDB_API_KEY=VOTRE_CLE_TMDB
-```
-
-> Si votre projet attend un autre nom de variable (ex: `TMDB_BEARER_TOKEN`), adaptez‑le selon `popcornhub-web/config.py` et/ou `docker-compose.yml`.
-
----
 
 ## ▶️ Installation & lancement
 
