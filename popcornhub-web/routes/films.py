@@ -26,7 +26,26 @@ from services.tmdb import (
 
 from services.auth_utils import login_required
 
+
 films_bp = Blueprint("films_bp", __name__)
+
+def _active_rental_until(data, owner_id: int, movie_id: int, now: datetime | None = None):
+    if now is None:
+        now = datetime.utcnow()
+
+    latest = None
+    for r in data.get("rentals", []):
+        if r.get("owner_id") != owner_id or r.get("movie_id") != movie_id:
+            continue
+        try:
+            expires = datetime.fromisoformat(r.get("expires_at"))
+        except Exception:
+            continue
+        if expires <= now:
+            continue
+        if latest is None or expires > latest:
+            latest = expires
+    return latest
 
 # ---------- Page filmographie acteur ----------
 
@@ -64,7 +83,6 @@ def actor_films(actor_name):
         films=films_for_actor,
     )
 
-
 # ---------- Détail d'un film ----------
 
 @films_bp.route("/films/<int:film_id>", endpoint="film_detail")
@@ -73,7 +91,6 @@ def film_detail(film_id):
     credits = movie.get("credits", {})
     film = tmdb_movie_to_film(movie, credits=credits)
 
-    # Acteurs
     actors = []
     for cast in credits.get("cast", [])[:8]:
         name = cast.get("name")
@@ -94,7 +111,6 @@ def film_detail(film_id):
         in_library = film_id in data.get("library", {}).get(uid, [])
         is_favorite = film_id in data.get("favorites", {}).get(uid, [])
 
-    # Avis
     reviews = [r for r in data["reviews"] if r["movie_id"] == film_id]
     users_by_id = {u["id"]: u for u in data["users"]}
     for r in reviews:
@@ -115,7 +131,6 @@ def film_detail(film_id):
                 user_review = r
                 break
 
-    # Location active ?
     is_rented = False
     rental_expires_at = None
     if session.get("user_id"):
@@ -127,7 +142,6 @@ def film_detail(film_id):
                     rental_expires_at = expires
                 break
 
-    # Propriétaires
     ownership_for_user = None
     owners_count = 0
 
@@ -140,7 +154,6 @@ def film_detail(film_id):
     ]
     owners_count = len(owners_for_film)
 
-    # Trailer YouTube
     trailer_key = None
     try:
         trailer_key = tmdb_movie_trailer_key(film.get("titre"), film.get("annee"))
@@ -164,11 +177,11 @@ def film_detail(film_id):
         owners_count=owners_count,
     )
 
+# ---------- Déclarer possession d'un film ----------
 
 @films_bp.post("/films/<int:film_id>/own", endpoint="own_film")
 @login_required
 def own_film(film_id):
-    """Déclare que l'utilisateur possède ce film (bluray / digital) + prix."""
     data = load_data()
     user_id = session["user_id"]
 
@@ -177,7 +190,7 @@ def own_film(film_id):
 
     if not has_bluray and not has_digital:
         flash("Veuillez choisir au moins un format (Blu-ray ou Digital).", "warning")
-        return redirect(url_for("film_detail", film_id=film_id))
+        return redirect(url_for("films_bp.film_detail", film_id=film_id))
 
     def parse_float(field):
         raw = request.form.get(field, "").strip()
@@ -188,6 +201,9 @@ def own_film(film_id):
         except ValueError:
             return None
 
+    bluray_price = parse_float("bluray_price") if has_bluray else None
+    digital_price = parse_float("digital_price") if has_digital else None
+
     def parse_int(field):
         raw = request.form.get(field, "").strip()
         if not raw:
@@ -197,8 +213,6 @@ def own_film(film_id):
         except ValueError:
             return None
 
-    bluray_price = parse_float("bluray_price") if has_bluray else None
-    digital_price = parse_float("digital_price") if has_digital else None
     bluray_max_days = parse_int("bluray_max_days") if has_bluray else None
     digital_max_days = parse_int("digital_max_days") if has_digital else None
 
@@ -228,21 +242,65 @@ def own_film(film_id):
 
     save_data(data)
     flash("Le film a été ajouté à votre vidéothèque.", "success")
-    return redirect(url_for("film_detail", film_id=film_id))
+    return redirect(url_for("films_bp.film_detail", film_id=film_id))
+
+
+@films_bp.post("/films/<int:film_id>/review")
+@login_required
+def add_or_update_review(film_id):
+    data = load_data()
+    user_id = session["user_id"]
+
+    try:
+        rating = int(request.form["rating"])
+    except (KeyError, ValueError):
+        rating = 0
+    rating = max(1, min(5, rating))
+
+    comment = request.form.get("comment", "").strip()
+
+    existing = None
+    for r in data["reviews"]:
+        if r["user_id"] == user_id and r["movie_id"] == film_id:
+            existing = r
+            break
+
+    now = datetime.utcnow().isoformat(timespec="seconds")
+
+    if existing:
+        existing["rating"] = rating
+        existing["comment"] = comment
+        existing["created_at"] = now
+    else:
+        review_id = get_next_id(data["reviews"])
+        data["reviews"].append(
+            {
+                "id": review_id,
+                "user_id": user_id,
+                "movie_id": film_id,
+                "rating": rating,
+                "comment": comment,
+                "created_at": now,
+            }
+        )
+
+    save_data(data)
+    flash("Votre avis a été enregistré.", "success")
+
+    return redirect(url_for("films_bp.film_detail", film_id=film_id))
 
 
 @films_bp.route("/films/<int:film_id>/availability", endpoint="film_availability")
 def film_availability(film_id):
-    # 1) Infos du film
     try:
         movie = tmdb_get(f"/movie/{film_id}")
         film = tmdb_movie_to_film(movie)
     except Exception:
         abort(404)
 
-    # 2) Propriétaires
     data = load_data()
     users_by_id = {u["id"]: u for u in data.get("users", [])}
+    now = datetime.utcnow()
 
     ownerships_raw = [
         o
@@ -270,6 +328,13 @@ def film_availability(film_id):
 
         seller_rating = own.get("seller_rating")  # placeholder
 
+        unavailable_until = _active_rental_until(data, own["user_id"], film_id, now=now)
+        is_available = unavailable_until is None
+
+        available_in_days = None
+        if unavailable_until:
+            available_in_days = max(0, (unavailable_until.date() - now.date()).days)
+
         entries.append(
             {
                 "owner_id": user["id"],
@@ -282,10 +347,16 @@ def film_availability(film_id):
                 "digital_max_days": own.get("digital_max_days"),
                 "min_price": min_price,
                 "seller_rating": seller_rating,
+                "is_available": is_available,
+                "available_at": (
+                    unavailable_until.strftime("%d/%m/%Y")
+                    if unavailable_until
+                    else None
+                ),
+                "available_in_days": available_in_days,
             }
         )
 
-    # 3) Filtres
     format_filter = request.args.get("format", "all")
     sort_by = request.args.get("sort_by", "price_asc")
     max_price_str = request.args.get("max_price", "").strip()
@@ -328,12 +399,16 @@ def film_availability(film_id):
     else:
         key_func, reverse = price_key, False
 
-    entries.sort(key=key_func, reverse=reverse)
+    available_entries = [e for e in entries if e["is_available"]]
+    unavailable_entries = [e for e in entries if not e["is_available"]]
+
+    available_entries.sort(key=key_func, reverse=reverse)
+    entries_sorted = available_entries + unavailable_entries
 
     return render_template(
         "film_availability.html",
         film=film,
-        entries=entries,
+        entries=entries_sorted,
         format_filter=format_filter,
         sort_by=sort_by,
         max_price=max_price_str,
@@ -343,12 +418,19 @@ def film_availability(film_id):
 @films_bp.post("/films/<int:film_id>/rent-from-owner/<int:owner_id>", endpoint="rent_from_owner")
 @login_required
 def rent_from_owner(film_id, owner_id):
-    """Loue un exemplaire précis depuis la page 'Exemplaires disponibles'."""
     data = load_data()
     user_id = session["user_id"]
     now = datetime.utcnow()
 
-    # Vérifier location déjà active
+    busy_until = _active_rental_until(data, owner_id, film_id, now=now)
+    if busy_until:
+        flash(
+            "Cet exemplaire est déjà loué. "
+            f"Disponible à partir du {busy_until.strftime('%d/%m/%Y') }.",
+            "warning",
+        )
+        return redirect(url_for("films_bp.film_availability", film_id=film_id))
+
     for r in data.get("rentals", []):
         if r["user_id"] == user_id and r["movie_id"] == film_id:
             last_expires = datetime.fromisoformat(r["expires_at"])
@@ -358,9 +440,8 @@ def rent_from_owner(film_id, owner_id):
                     f"(jusqu’au {last_expires.strftime('%d/%m/%Y %H:%M')}).",
                     "warning",
                 )
-                return redirect(url_for("film_availability", film_id=film_id))
+                return redirect(url_for("films_bp.film_availability", film_id=film_id))
 
-    # Retrouver l'exemplaire
     own = None
     for o in data.get("user_owns", []):
         if (
@@ -373,20 +454,20 @@ def rent_from_owner(film_id, owner_id):
 
     if not own:
         flash("Cet exemplaire n’est plus disponible.", "warning")
-        return redirect(url_for("film_availability", film_id=film_id))
+        return redirect(url_for("films_bp.film_availability", film_id=film_id))
 
     fmt = request.form.get("format")
     if fmt not in ("bluray", "digital"):
         flash("Veuillez choisir un format à louer.", "warning")
-        return redirect(url_for("film_availability", film_id=film_id))
+        return redirect(url_for("films_bp.film_availability", film_id=film_id))
 
     if fmt == "bluray" and not own.get("has_bluray"):
         flash("Ce propriétaire ne propose plus le Blu-ray.", "warning")
-        return redirect(url_for("film_availability", film_id=film_id))
+        return redirect(url_for("films_bp.film_availability", film_id=film_id))
 
     if fmt == "digital" and not own.get("has_digital"):
         flash("Ce propriétaire ne propose plus le streaming.", "warning")
-        return redirect(url_for("film_availability", film_id=film_id))
+        return redirect(url_for("films_bp.film_availability", film_id=film_id))
 
     if fmt == "bluray":
         price = own.get("bluray_price")
@@ -429,47 +510,4 @@ def rent_from_owner(film_id, owner_id):
     save_data(data)
 
     flash("Location créée avec succès ✅", "success")
-    return redirect(url_for("profile_locations"))
-
-
-@films_bp.post("/films/<int:film_id>/review", endpoint="add_or_update_review")
-@login_required
-def add_or_update_review(film_id):
-    data = load_data()
-    user_id = session["user_id"]
-
-    try:
-        rating = int(request.form["rating"])
-    except (KeyError, ValueError):
-        rating = 0
-    comment = request.form.get("comment", "").strip()
-    rating = max(1, min(5, rating))
-
-    existing = None
-    for r in data["reviews"]:
-        if r["user_id"] == user_id and r["movie_id"] == film_id:
-            existing = r
-            break
-
-    now = datetime.utcnow().isoformat(timespec="seconds")
-
-    if existing:
-        existing["rating"] = rating
-        existing["comment"] = comment
-        existing["created_at"] = now
-    else:
-        review_id = get_next_id(data["reviews"])
-        data["reviews"].append(
-            {
-                "id": review_id,
-                "user_id": user_id,
-                "movie_id": film_id,
-                "rating": rating,
-                "comment": comment,
-                "created_at": now,
-            }
-        )
-
-    save_data(data)
-    flash("Votre avis a été enregistré.", "success")
-    return redirect(url_for("film_detail", film_id=film_id))
+    return redirect(url_for("films_bp.film_availability", film_id=film_id))

@@ -11,28 +11,18 @@ from datetime import datetime
 
 from config import SECRET_KEY
 
-# Services maison
 from services.data import load_data
 from services.tmdb import tmdb_get, tmdb_movie_to_film
-
-# ---------- Création de l'app ----------
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
-# Limites TMDb / pagination
-MAX_FILMS = 1000            # on limite à 1000 films max
-TMDB_PAGE_SIZE = 20         # taille d'une page TMDb
+MAX_FILMS = 1000           
+TMDB_PAGE_SIZE = 20         
 MAX_PAGES = MAX_FILMS // TMDB_PAGE_SIZE
 
 
-# ---------- Helper auth : login_required ----------
-
 def login_required(view):
-    """
-    Décorateur pour forcer la connexion.
-    Utilisé dans les blueprints via 'from app import login_required'.
-    """
     from functools import wraps
 
     @wraps(view)
@@ -42,9 +32,6 @@ def login_required(view):
         return view(*args, **kwargs)
 
     return wrapped
-
-
-# ---------- Enregistrement des blueprints ----------
 
 from routes.auth import auth_bp
 from routes.films import films_bp
@@ -56,14 +43,10 @@ app.register_blueprint(films_bp)
 app.register_blueprint(favorites_bp)
 app.register_blueprint(profile_bp)
 
-
-# ---------- Accueil : liste de films TMDb ----------
-
 @app.route("/", endpoint="index")
 def index():
     data = load_data()
 
-    # ----- paramètres de la requête -----
     q = request.args.get("q", "").strip()
     genre_id = request.args.get("genre", "").strip()
     try:
@@ -74,7 +57,6 @@ def index():
 
     params = {"page": page}
 
-    # ----- appel TMDb suivant le contexte -----
     try:
         if q:
             params["query"] = q
@@ -92,13 +74,11 @@ def index():
         tmdb_page = {}
         movies = []
 
-    # ----- masquer les films supprimés (si jamais tu utilises encore deleted_films) -----
     deleted_ids = set(data.get("deleted_films", []))
     movies = [m for m in movies if m.get("id") not in deleted_ids]
 
     films_page = [tmdb_movie_to_film(m) for m in movies]
 
-    # ----- pagination / limites -----
     total_results_api = tmdb_page.get("total_results", len(movies))
     total_pages_api = tmdb_page.get("total_pages", 1)
     max_pages = min(total_pages_api, MAX_PAGES)
@@ -108,7 +88,6 @@ def index():
 
     total_films = min(total_results_api, MAX_FILMS)
 
-    # ----- favoris / vidéothèque (ancienne structure library pour compat) -----
     favorite_ids = set()
     library_ids = set()
     if session.get("user_id"):
@@ -116,7 +95,6 @@ def index():
         favorite_ids = set(data.get("favorites", {}).get(uid, []))
         library_ids = set(data.get("library", {}).get(uid, []))
 
-    # ----- liste des genres -----
     try:
         genres_data = tmdb_get("/genre/movie/list", {"language": "fr-FR"})
         genres = genres_data.get("genres", [])
@@ -136,9 +114,5 @@ def index():
         selected_genre=genre_id,
     )
 
-
-# ---------- Lancement ----------
-
 if __name__ == "__main__":
-    # debug=False en prod, True si tu veux les erreurs détaillées
     app.run(host="0.0.0.0", port=5000, debug=False)

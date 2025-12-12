@@ -5,10 +5,20 @@
 <div class="container py-5">
   <h1 class="page-title mb-4">Connexion</h1>
 
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} mb-3" role="alert">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
   <div class="row justify-content-center">
     <div class="col-md-6">
       <div class="form-card">
-        <form method="post" action="{{ url_for('login') }}">
+        <form method="post" action="{{ url_for('auth.login') }}">
           <div class="mb-3">
             <label class="form-label" for="username">Nom d'utilisateur</label>
             <input type="text" class="form-control" id="username" name="username" required>
@@ -27,7 +37,7 @@
 
           <p class="text-center mt-2" style="font-size:0.95rem; opacity:0.9;">
             Pas encore de compte ?
-            <a href="{{ url_for('signup') }}" class="text-decoration-none" style="color:#ff9800;">
+            <a href="{{ url_for('auth.signup') }}" class="text-decoration-none" style="color:#ff9800;">
               Créer un compte
             </a>
           </p>

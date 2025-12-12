@@ -5,9 +5,7 @@
 {% block content %}
 <div class="container my-4">
 
-  <!-- HEADER FILM : AFFICHE + INFOS -->
   <div class="row g-4">
-    <!-- Affiche -->
     <div class="col-md-4">
       {% if film.affiche_url %}
         <img src="{{ film.affiche_url }}"
@@ -21,10 +19,8 @@
       {% endif %}
     </div>
 
-    <!-- Infos film -->
     <div class="col-md-8">
 
-      <!-- Titre + méta + bouton bande-annonce alignés -->
       <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
         <div>
           <h1 class="mb-2">{{ film.titre }}</h1>
@@ -58,7 +54,6 @@
         <p class="mb-3 text-light">{{ film.resume }}</p>
       {% endif %}
 
-      <!-- Bloc note moyenne -->
       <div class="mb-3">
         {% if avg_rating %}
           <span class="fw-semibold text-light">Note moyenne :</span>
@@ -69,12 +64,11 @@
         {% endif %}
       </div>
 
-      <!-- DISTRIBUTION (ACTEURS) - style “chips” -->
       <h2 class="h4 mb-3 text-light">Distribution</h2>
 
       <div class="d-flex flex-wrap gap-2 mb-4">
         {% for actor in actors %}
-          <a href="{{ url_for('actor_films', actor_name=actor.name) }}"
+          <a href="{{ url_for('films_bp.actor_films', actor_name=actor.name) }}"
              class="btn btn-outline-light btn-sm d-flex align-items-center rounded-pill"
              style="background-color:#111;">
             <span class="rounded-circle overflow-hidden me-2"
@@ -91,42 +85,50 @@
 
       <hr class="my-4">
 
-      <!-- Section Gestion du Film -->
       <h3 class="text-white mb-3">Gestion du film</h3>
 
-      <!-- Boutons d'action -->
       <div class="d-flex flex-wrap gap-3 mb-3">
+        {% if session.get('user_id') %}
+          <button class="btn btn-warning"
+                  data-bs-toggle="modal"
+                  data-bs-target="#ownFilmModal">
+            Ajouter à ma vidéothèque
+          </button>
 
-        <!-- Ajouter à vidéothèque -->
-        <button class="btn btn-warning"
-                data-bs-toggle="modal"
-                data-bs-target="#ownFilmModal">
-          Ajouter à ma vidéothèque
-        </button>
+          <a href="{{ url_for('films_bp.film_availability', film_id=film.id) }}"
+            class="btn btn-outline-light">
+            Voir les exemplaires disponibles
+          </a>
+        {% else %}
+          <button class="btn btn-warning"
+                  data-bs-toggle="modal"
+                  data-bs-target="#loginRequiredModal">
+            Ajouter à ma vidéothèque
+          </button>
 
-        <!-- Voir les exemplaires -->
-        <a href="{{ url_for('film_availability', film_id=film.id) }}"
-           class="btn btn-outline-light">
-          Voir les exemplaires disponibles
-        </a>
+          <button class="btn btn-outline-light"
+                  data-bs-toggle="modal"
+                  data-bs-target="#loginRequiredModal">
+            Voir les exemplaires disponibles
+          </button>
+        {% endif %}
       </div>
 
       <hr class="my-3">
 
-      <!-- AVIS UTILISATEURS -->
       <h2 class="h4 mb-3 text-light">Avis des utilisateurs</h2>
 
       {% if session.get('user_id') %}
-        <form action="{{ url_for('add_or_update_review', film_id=film.id) }}"
+        <form action="{{ url_for('films_bp.add_or_update_review', film_id=film.id) }}"
               method="post"
               class="mb-4">
           <div class="row g-2 align-items-center">
             <div class="col-md-2">
               <label for="rating" class="form-label mb-0 text-light">Votre note</label>
               <select name="rating" id="rating" class="form-select form-select-sm">
-                {% for n in range(1,6) %}
+                {% for n in range(1, 6) %}
                   <option value="{{ n }}"
-                          {% if user_review and user_review.rating == n %}selected{% endif %}>
+                          {% if n == 5 %}selected{% endif %}>
                     {{ n }}/5
                   </option>
                 {% endfor %}
@@ -136,7 +138,7 @@
               <label for="comment" class="form-label mb-0 text-light">Commentaire</label>
               <textarea name="comment" id="comment" rows="2"
                         class="form-control form-control-sm"
-                        placeholder="Partagez votre avis...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+                        placeholder="Partagez votre avis..."></textarea>
             </div>
             <div class="col-md-2 d-flex align-items-end">
               <button type="submit" class="btn btn-popcorn-primary w-100">
@@ -147,38 +149,51 @@
         </form>
       {% else %}
         <p class="text-light">
-          <a href="{{ url_for('login') }}" class="link-light">Connectez-vous</a>
+          <a href="{{ url_for('auth_bp.login') }}" class="link-light">Connectez-vous</a>
           pour laisser un avis.
         </p>
       {% endif %}
 
       {% if reviews %}
-        <div class="list-group list-group-flush">
-          {% for r in reviews %}
-            <div class="list-group-item bg-dark border-secondary">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <strong class="text-light">{{ r.username }}</strong>
-                  <span class="ms-2 text-warning">{{ r.rating }}/5</span>
+      <div class="list-group list-group-flush">
+        {% for r in reviews %}
+          <div class="list-group-item bg-dark border-secondary">
+            <div class="d-flex justify-content-between">
+              
+              <div class="d-flex align-items-center mb-2">
+
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center"
+                       style="width:32px;height:32px;font-weight:600;">
+                    {{ r.username[:1]|upper }}
+                  </div>
+            
+                  <span class="text-light fw-semibold" style="font-size:0.95rem;">
+                    {{ r.username }}
+                  </span>
                 </div>
-                <small class="text-light">
-                  {{ r.created_at }}
-                </small>
-              </div>
-              {% if r.comment %}
-                <p class="mb-0 mt-1 text-light">{{ r.comment }}</p>
-              {% endif %}
+            
+                <span class="ms-3 text-warning fw-bold">{{ r.rating }}/5</span>
             </div>
-          {% endfor %}
-        </div>
-      {% endif %}
+
+              <small class="text-light">
+                {{ r.created_at }}
+              </small>
+            </div>
+
+            {% if r.comment %}
+              <p class="mb-0 mt-1 text-light">{{ r.comment }}</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
 
     </div>
   </div>
 </div>
 
 {% if trailer_key %}
-<!-- MODAL : Bande-annonce -->
 <div class="modal fade" id="trailerModal" tabindex="-1"
      aria-labelledby="trailerModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -194,7 +209,6 @@
       </div>
       <div class="modal-body p-0">
         <div class="ratio ratio-16x9">
-          <!-- src vide au départ, rempli au moment de l'ouverture -->
           <iframe id="trailerIframe"
                   src=""
                   data-src="https://www.youtube.com/embed/{{ trailer_key }}?rel=0&autoplay=1"
@@ -209,12 +223,11 @@
 </div>
 {% endif %}
 
-<!-- MODAL : Ajouter à ma vidéothèque -->
 <div class="modal fade" id="ownFilmModal" tabindex="-1"
      aria-labelledby="ownFilmModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <form method="post"
-          action="{{ url_for('own_film', film_id=film.id) }}"
+          action="{{ url_for('films_bp.own_film', film_id=film.id) }}"
           class="modal-content bg-dark text-light rounded-4 shadow-lg border-0">
       <div class="modal-header border-0" style="background:#111;">
         <h5 class="modal-title" id="ownFilmModalLabel">
@@ -306,6 +319,40 @@
   </div>
 </div>
 
+<div class="modal fade" id="loginRequiredModal" tabindex="-1"
+     aria-labelledby="loginRequiredLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light rounded-4 shadow-lg border-0">
+      <div class="modal-header border-0" style="background:#111;">
+        <h5 class="modal-title" id="loginRequiredLabel">
+          Connexion requise
+        </h5>
+        <button type="button"
+                class="btn-close btn-close-white"
+                data-bs-dismiss="modal"
+                aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">
+          Vous devez être connecté pour ajouter un film à votre vidéothèque
+          ou voir les exemplaires disponibles.
+          Connectez-vous ou créez un compte pour continuer.
+        </p>
+      </div>
+      <div class="modal-footer border-0" style="background:#111;">
+        <a href="{{ url_for('auth.login', next=request.path) }}"
+           class="btn btn-warning fw-semibold">
+          Se connecter
+        </a>
+        <a href="{{ url_for('auth.signup') }}"
+           class="btn btn-outline-light">
+          Créer un compte
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -321,12 +368,10 @@
 
       var videoSrc = iframe.getAttribute('data-src');
 
-      // Quand on ouvre la modal : on charge la vidéo avec autoplay
       modalEl.addEventListener('shown.bs.modal', function () {
         iframe.setAttribute('src', videoSrc);
       });
 
-      // Quand on ferme : on vide la source pour arrêter le son
       modalEl.addEventListener('hidden.bs.modal', function () {
         iframe.setAttribute('src', '');
       });

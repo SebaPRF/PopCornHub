@@ -4,30 +4,27 @@
 
 {% block content %}
 <div class="layout-with-sidebar">
-    <!-- Sidebar -->
     <aside class="profile-sidebar">
         <div class="profile-sidebar-card">
             <div class="profile-sidebar-title">Mon profil</div>
 
-            <a href="{{ url_for('profile') }}"
+            <a href="{{ url_for('profile_bp.profile') }}"
                class="profile-sidebar-link {% if active_tab == 'library' %}active{% endif %}">
                 <span>Ma vidéothèque</span>
             </a>
 
-            <a href="{{ url_for('profile_locations') }}"
+            <a href="{{ url_for('profile_bp.profile_locations') }}"
                class="profile-sidebar-link {% if active_tab == 'locations' %}active{% endif %}">
                 <span>Mes locations</span>
             </a>
         </div>
     </aside>
 
-    <!-- Contenu principal -->
     <main class="profile-main">
         <header class="profile-header d-flex justify-content-between align-items-center">
             <h1 class="page-title mb-0">Mon profil PopCornHub</h1>
         </header>
 
-        {# ------------------------- MA VIDEOTHEQUE ------------------------- #}
         {% if active_tab == 'library' %}
         <section id="library" class="section-block">
             <h2 class="section-title">Ma vidéothèque</h2>
@@ -42,7 +39,6 @@
                         {% set film = item.movie %}
                         {% set own = item.ownership %}
 
-                        <!-- Carte film -->
                         <article class="film-card film-card--library">
                             <div class="film-card__thumb">
                                 {% if film.affiche_url %}
@@ -58,7 +54,7 @@
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
                                         <h3 class="film-card__title mb-1">
-                                            <a href="{{ url_for('film_detail', film_id=film.id) }}">
+                                            <a href="{{ url_for('films_bp.film_detail', film_id=film.id) }}">
                                                 {{ film.titre }}
                                             </a>
                                         </h3>
@@ -67,9 +63,8 @@
                                         {% endif %}
                                     </div>
 
-                                    <!-- Badge public / privé -->
                                     <form method="post"
-                                          action="{{ url_for('toggle_library_public', film_id=film.id) }}">
+                                          action="{{ url_for('profile_bp.toggle_library_public', film_id=film.id) }}">
                                         <button type="submit"
                                                 class="badge-status {{ 'badge-status--public' if own.is_public else 'badge-status--private' }}">
                                             {% if own.is_public %}
@@ -81,8 +76,6 @@
                                     </form>
                                 </div>
 
-                                <!-- Formats sous forme de tags -->
-                                <!-- Résumé formats + prix -->
                                 <div class="library-summary mb-2">
                                     <div class="library-summary-label mb-1">
                                         Formats &amp; location
@@ -133,19 +126,14 @@
                                     </div>
                                 </div>
 
-                                <!-- Actions -->
                                 <div class="d-flex justify-content-between align-items-center gap-2">
-                                    <!-- Supprimer -->
-                                    <form method="post"
-                                          action="{{ url_for('delete_library_item', film_id=item.film_id) }}"
-                                          class="flex-grow-1">
-                                      <button type="submit"
-                                              class="btn btn-danger w-100 fw-semibold">
+                                    <button type="button"
+                                            class="btn btn-danger w-100 fw-semibold"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#confirmDeleteLibrary-{{ film.id }}">
                                         Supprimer
-                                      </button>
-                                    </form>
+                                    </button>
 
-                                    <!-- Modifier -->
                                     <button type="button"
                                             class="btn btn-xs btn-outline-light"
                                             data-bs-toggle="modal"
@@ -156,128 +144,152 @@
                             </div>
                         </article>
 
-                        <!-- Modal d’édition -->
+                        <div class="modal fade" id="confirmDeleteLibrary-{{ film.id }}" tabindex="-1"
+                             aria-labelledby="confirmDeleteLibraryLabel-{{ film.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <form method="post"
+                                      action="{{ url_for('profile_bp.delete_library_item', film_id=film.id) }}"
+                                      class="modal-content bg-dark text-light rounded-4 shadow-lg border-0">
+                                    <div class="modal-header border-0" style="background:#111;">
+                                        <h5 class="modal-title" id="confirmDeleteLibraryLabel-{{ film.id }}">
+                                            Supprimer « {{ film.titre }} »
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal" aria-label="Fermer"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Es-tu sûr de vouloir supprimer ce film de ta vidéothèque ?
+                                        <br>
+                                        <span class="text-muted small">
+                                            Cette action ne supprimera pas le film de PopCornHub,
+                                            seulement de ta liste personnelle.
+                                        </span>
+                                    </div>
+                                    <div class="modal-footer border-0" style="background:#111;">
+                                        <button type="button" class="btn btn-outline-light"
+                                                data-bs-dismiss="modal">
+                                            Annuler
+                                        </button>
+                                        <button type="submit" class="btn btn-danger fw-semibold">
+                                            Oui, supprimer
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
                         <div class="modal fade" id="editLibraryModal-{{ film.id }}" tabindex="-1"
                              aria-labelledby="editLibraryLabel-{{ film.id }}" aria-hidden="true">
                             <div class="modal-dialog modal-lg modal-dialog-centered">
-                                <div class="modal-content profile-modal">
-                                    <form method="post"
-                                          action="{{ url_for('update_library_item', film_id=film.id) }}">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="editLibraryLabel-{{ film.id }}">
-                                                Modifier « {{ film.titre }} »
-                                            </h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Fermer"></button>
-                                        </div>
+                                <form method="post"
+                                      action="{{ url_for('profile_bp.update_library_item', film_id=film.id) }}"
+                                      class="modal-content bg-dark text-light rounded-4 shadow-lg border-0">
+                                    <div class="modal-header border-0" style="background:#111;">
+                                        <h5 class="modal-title" id="editLibraryLabel-{{ film.id }}">
+                                            Modifier « {{ film.titre }} »
+                                        </h5>
+                                        <button type="button"
+                                                class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal"
+                                                aria-label="Fermer"></button>
+                                    </div>
 
-                                        <div class="modal-body">
-                                            <div class="row g-3">
-                                                <div class="col-12">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox"
-                                                               id="publicSwitch-{{ film.id }}"
-                                                               name="is_public"
-                                                               {% if own.is_public %}checked{% endif %}>
-                                                        <label class="form-check-label"
-                                                               for="publicSwitch-{{ film.id }}">
-                                                            Rendre ce film visible pour les autres utilisateurs
-                                                            lors d’une recherche d’exemplaires.
-                                                        </label>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <div class="library-format-block">
-                                                        <label class="form-check mb-2">
-                                                            <input type="checkbox"
-                                                                   class="form-check-input"
-                                                                   name="has_bluray"
-                                                                   {% if own.has_bluray %}checked{% endif %}>
-                                                            <span class="form-check-label">
-                                                                Blu-ray (physique)
-                                                            </span>
-                                                        </label>
-                                                        <div class="row g-2">
-                                                            <div class="col-6">
-                                                                <label class="form-label small">
-                                                                    Prix location Blu-ray (€)
-                                                                    <input type="text"
-                                                                           class="form-control form-control-sm"
-                                                                           name="bluray_price"
-                                                                           value="{{ own.bluray_price if own.bluray_price is not none }}"
-                                                                           placeholder="ex: 2.50">
-                                                                </label>
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <label class="form-label small">
-                                                                    Durée max (jours)
-                                                                    <input type="text"
-                                                                           class="form-control form-control-sm"
-                                                                           name="bluray_max_days"
-                                                                           value="{{ own.bluray_max_days if own.bluray_max_days is not none }}"
-                                                                           placeholder="ex: 3">
-                                                                </label>
-                                                            </div>
+                                    <div class="modal-body">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="library-format-block">
+                                                    <label class="form-check mb-2">
+                                                        <input type="checkbox"
+                                                               class="form-check-input"
+                                                               name="has_bluray"
+                                                               {% if own.has_bluray %}checked{% endif %}>
+                                                        <span class="form-check-label">
+                                                            Blu-ray (physique)
+                                                        </span>
+                                                    </label>
+                                                    <div class="row g-2">
+                                                        <div class="col-6">
+                                                            <label class="form-label small text-white">
+                                                                Prix location Blu-ray (€)
+                                                                <input type="text"
+                                                                       class="form-control form-control-sm"
+                                                                       name="bluray_price"
+                                                                       value="{{ own.bluray_price if own.bluray_price is not none }}"
+                                                                       placeholder="ex: 2.50"
+                                                                       style="color:#fff;">
+                                                            </label>
                                                         </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <div class="library-format-block">
-                                                        <label class="form-check mb-2">
-                                                            <input type="checkbox"
-                                                                   class="form-check-input"
-                                                                   name="has_digital"
-                                                                   {% if own.has_digital %}checked{% endif %}>
-                                                            <span class="form-check-label">
-                                                                Version digitale / streaming
-                                                            </span>
-                                                        </label>
-                                                        <div class="row g-2">
-                                                            <div class="col-6">
-                                                                <label class="form-label small">
-                                                                    Prix location Digital (€)
-                                                                    <input type="text"
-                                                                           class="form-control form-control-sm"
-                                                                           name="digital_price"
-                                                                           value="{{ own.digital_price if own.digital_price is not none }}"
-                                                                           placeholder="ex: 1.99">
-                                                                </label>
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <label class="form-label small">
-                                                                    Durée max (jours)
-                                                                    <input type="text"
-                                                                           class="form-control form-control-sm"
-                                                                           name="digital_max_days"
-                                                                           value="{{ own.digital_max_days if own.digital_max_days is not none }}"
-                                                                           placeholder="ex: 3">
-                                                                </label>
-                                                            </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label small text-white">
+                                                                Durée max (jours)
+                                                                <input type="text"
+                                                                       class="form-control form-control-sm"
+                                                                       name="bluray_max_days"
+                                                                       value="{{ own.bluray_max_days if own.bluray_max_days is not none }}"
+                                                                       placeholder="ex: 3"
+                                                                       style="color:#fff;">
+                                                            </label>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <p class="text-muted small mt-3 mb-0">
-                                                Astuce : ne coche que les formats que tu possèdes vraiment.
-                                                Les autres ne verront tes exemplaires que dans ces formats-là.
-                                            </p>
+                                            <div class="col-md-6">
+                                                <div class="library-format-block">
+                                                    <label class="form-check mb-2">
+                                                        <input type="checkbox"
+                                                               class="form-check-input"
+                                                               name="has_digital"
+                                                               {% if own.has_digital %}checked{% endif %}>
+                                                        <span class="form-check-label">
+                                                            Version digitale / streaming
+                                                        </span>
+                                                    </label>
+                                                    <div class="row g-2">
+                                                        <div class="col-6">
+                                                            <label class="form-label small text-white">
+                                                                Prix location Digital (€)
+                                                                <input type="text"
+                                                                       class="form-control form-control-sm"
+                                                                       name="digital_price"
+                                                                       value="{{ own.digital_price if own.digital_price is not none }}"
+                                                                       placeholder="ex: 1.99"
+                                                                       style="color:#fff;">
+                                                            </label>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label small text-white">
+                                                                Durée max (jours)
+                                                                <input type="text"
+                                                                       class="form-control form-control-sm"
+                                                                       name="digital_max_days"
+                                                                       value="{{ own.digital_max_days if own.digital_max_days is not none }}"
+                                                                       placeholder="ex: 3"
+                                                                       style="color:#fff;">
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <div class="modal-footer">
-                                            <button type="button"
-                                                    class="btn btn-outline-secondary"
-                                                    data-bs-dismiss="modal">
-                                                Annuler
-                                            </button>
-                                            <button type="submit" class="btn btn-popcorn-primary">
-                                                Enregistrer
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
+                                        <p class="small mt-3 mb-0 text-white">
+                                            Astuce : ne coche que les formats que tu possèdes vraiment.
+                                            Les autres ne verront tes exemplaires que dans ces formats-là.
+                                        </p>
+                                    </div>
+
+                                    <div class="modal-footer border-0" style="background:#111;">
+                                        <button type="button"
+                                                class="btn btn-outline-light"
+                                                data-bs-dismiss="modal">
+                                            Annuler
+                                        </button>
+                                        <button type="submit" class="btn btn-warning fw-semibold">
+                                            Enregistrer
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     {% endfor %}
@@ -286,46 +298,77 @@
         </section>
         {% endif %}
 
-        {# ------------------------- MES LOCATIONS ------------------------- #}
         {% if active_tab == 'locations' %}
         <section id="rentals" class="section-block">
-            <h2 class="section-title">Mes locations</h2>
+        <h2 class="section-title">Mes locations</h2>
 
-            {% if rentals|length == 0 %}
-                <p class="empty-state">
-                    Aucune location pour le moment.
-                </p>
-            {% else %}
-                <div class="rentals-list">
-                    {% for r in rentals %}
-                        <div class="rental-item">
-                            <div class="rental-main">
-                                <div class="rental-title">
-                                    {{ r.titre }}
-                                    {% if r.annee %} ({{ r.annee }}){% endif %}
-                                </div>
-                                {% if r.realisateur %}
-                                    <div class="rental-meta">
-                                        Réalisateur : {{ r.realisateur }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="rental-meta">
-                                Loué le {{ r.rented_at|replace('T', ' ') }}
-                                – jusqu'au {{ r.expires_at|replace('T', ' ') }}
-                            </div>
-                            <div class="rental-footer">
-                                <span class="badge {{ 'badge-success' if r.is_active else 'badge-secondary' }}">
-                                    {% if r.is_active %}En cours{% else %}Expirée{% endif %}
-                                </span>
-                                <span class="rental-price">
-                                    {{ '%.2f'|format(r.price_eur) }} €
-                                </span>
-                            </div>
-                        </div>
-                    {% endfor %}
+        {% if rentals|length == 0 %}
+            <p class="empty-state">Aucune location pour le moment.</p>
+        {% else %}
+            <div class="cards-grid cards-grid--library">
+            {% for r in rentals %}
+                <article class="film-card film-card--library">
+                <div class="film-card__thumb">
+                    {% if r.affiche_url %}
+                        <img src="{{ r.affiche_url }}" alt="Affiche de {{ r.titre }}" class="film-card__poster">
+                    {% else %}
+                        <div class="film-card__poster--placeholder">{{ r.titre }}</div>
+                    {% endif %}
                 </div>
-            {% endif %}
+
+                <div class="film-card__info">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h3 class="film-card__title mb-1">
+                        <a href="{{ url_for('films_bp.film_detail', film_id=r.movie_id) }}">
+                            {{ r.titre }}
+                        </a>
+                        </h3>
+                        {% if r.annee %}
+                        <p class="film-card__meta mb-0">{{ r.annee }}</p>
+                        {% endif %}
+                    </div>
+
+                    <span class="badge-status {{ 'badge-status--public' if r.is_active else 'badge-status--private' }}">
+                        {% if r.is_active %}En cours{% else %}Terminée{% endif %}
+                    </span>
+                    </div>
+
+                    <div class="library-summary mb-2">
+                    <div class="library-summary-label mb-1">
+                        FORMAT &amp; PÉRIODE
+                    </div>
+
+                    <div class="library-summary-chips">
+                        <div class="library-chip">
+                        <span class="tag tag--format">
+                            {% if r.format == 'bluray' %}Blu-ray{% else %}Digital{% endif %}
+                        </span>
+
+                        <span class="library-chip-price">
+                            {{ '%.2f'|format(r.price_eur) }} €
+                        </span>
+                        </div>
+                    </div>
+
+                    <div class="small mt-2" style="color:#fff; opacity:.85;">
+                        Loué le {{ r.rented_at|replace('T', ' ') }}<br>
+                        jusqu’au {{ r.expires_at|replace('T', ' ') }}
+                    </div>
+                    </div>
+
+                    <form method="post"
+                        action="{{ url_for('profile_bp.return_rental', rental_id=r.rental_id) }}"
+                        onsubmit="return confirm('Êtes-vous sûr de vouloir rendre ce film ?');">
+                    <button type="submit" class="btn btn-danger w-100 fw-semibold">
+                        Rendre le film
+                    </button>
+                    </form>
+                </div>
+                </article>
+            {% endfor %}
+            </div>
+        {% endif %}
         </section>
         {% endif %}
     </main>

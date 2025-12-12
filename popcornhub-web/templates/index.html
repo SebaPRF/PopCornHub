@@ -6,7 +6,6 @@
 
   <h1 class="page-title mb-4">Vidéothèque</h1>
 
-  <!-- Recherche + filtre genres -->
   <form method="get" class="row g-3 align-items-center mb-4">
     <div class="col-md-6">
       <input
@@ -36,14 +35,12 @@
     </div>
   </form>
 
-  <!-- Grille de films -->
   <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
     {% for film in films %}
       <div class="col">
         <div class="film-card shadow-sm rounded h-100">
 
-          <!-- Affiche cliquable vers la page détail -->
-          <a href="{{ url_for('film_detail', film_id=film.id) }}"
+          <a href="{{ url_for('films_bp.film_detail', film_id=film.id) }}"
              class="film-card-poster-link">
             {% if film.affiche_url %}
             {% if film.affiche_url %}
@@ -62,7 +59,6 @@
             {% endif %}
           </a>
 
-          <!-- Texte -->
           <div class="film-card-body">
             <h5 class="film-title mb-1">{{ film.titre }}</h5>
 
@@ -82,7 +78,6 @@
     {% endfor %}
   </div>
 
-  <!-- Pagination -->
   {% if total_pages and total_pages > 1 %}
     <nav class="mt-4">
       <ul class="pagination justify-content-center">

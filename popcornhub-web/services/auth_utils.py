@@ -3,7 +3,6 @@ from flask import session, redirect, url_for, request
 
 
 def login_required(view):
-    """Décorateur simple pour forcer la connexion."""
     @wraps(view)
     def wrapped(*args, **kwargs):
         if "user_id" not in session:

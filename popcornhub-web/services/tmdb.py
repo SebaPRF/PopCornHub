@@ -1,4 +1,3 @@
-# tmdb_helpers.py
 import requests
 from config import TMDB_API_KEY, TMDB_BASE_URL, TMDB_IMG_BASE
 
@@ -15,9 +14,6 @@ def tmdb_get(path, params=None):
 
 
 def tmdb_movie_to_film(movie, credits=None):
-    """
-    Convertit un objet 'movie' TMDb en dict 'film' compatible avec les templates.
-    """
     titre = movie.get("title") or movie.get("name")
     release_date = movie.get("release_date") or movie.get("first_air_date") or ""
     annee = int(release_date[:4]) if len(release_date) >= 4 else None
@@ -76,10 +72,6 @@ def tmdb_person_image_url(person):
 
 
 def tmdb_movie_trailer_key(title: str, year: int | None):
-    """
-    Recherche un film par titre + année, puis renvoie la clé YouTube d'un trailer.
-    Utilisé dans film_detail.
-    """
     if not title:
         return None
     params = {"query": title}
@@ -96,7 +88,6 @@ def tmdb_movie_trailer_key(title: str, year: int | None):
     data = tmdb_get(f"/movie/{movie_id}/videos", {"language": "fr-FR"})
     videos = data.get("results", [])
 
-    # 1) trailer YouTube en FR
     for v in videos:
         if (
             v.get("site") == "YouTube"
@@ -105,7 +96,6 @@ def tmdb_movie_trailer_key(title: str, year: int | None):
         ):
             return v.get("key")
 
-    # 2) n'importe quel trailer YouTube
     for v in videos:
         if v.get("site") == "YouTube" and v.get("type") == "Trailer":
             return v.get("key")

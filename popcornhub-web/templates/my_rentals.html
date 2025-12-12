@@ -11,7 +11,6 @@
       {% for r in rentals %}
         <article class="profile-rental-card">
 
-          <!-- Affiche -->
           <div class="profile-rental-poster">
             {% set poster = r.poster_url or r.affiche_url %}
             {% if poster %}
@@ -25,7 +24,6 @@
             {% endif %}
           </div>
 
-          <!-- Contenu -->
           <div class="profile-rental-body">
 
             <h2 class="profile-rental-title">
@@ -64,7 +62,6 @@
 
               {% if r.is_active %}
 
-                <!-- Bouton Rendre -->
                 <form method="post"
                       action="{{ url_for('return_rental', rental_id=r.id) }}"
                       class="flex-grow-1">
@@ -75,8 +72,7 @@
                 </form>
 
               {% else %}
-                <!-- Location expirée : proposer de relouer (renvoie vers la fiche du film) -->
-                <a href="{{ url_for('film_detail', film_id=r.film_id) }}"
+                <a href="{{ url_for('films_bp.film_detail', film_id=r.film_id) }}"
                    class="btn btn-outline-light w-100 flex-grow-1">
                   Relouer
                 </a>

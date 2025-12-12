@@ -1,8 +1,16 @@
 # 🍿 PopCornHub
 
-**Application Web & API pour la gestion d'une vidéothèque**
+**Application web de gestion de vidéothèque et de locations de films**
 
-PopCornHub est une application web complète permettant de gérer une vidéothèque : films, favoris, locations, avis utilisateurs, etc. Elle repose sur une architecture à deux niveaux avec un backend API Flask et un frontend Web Flask, pouvant être déployés sur deux machines distinctes.
+PopCornHub est une application web complète permettant aux utilisateurs de :
+- gérer leur vidéothèque personnelle,
+- proposer leurs films à la location,
+- louer des films à d’autres utilisateurs,
+- laisser des avis,
+- consulter des fiches films enrichies via TMDb.
+
+L’application repose sur **Flask**, utilise **TMDb** pour les données cinéma,  
+et stocke les données localement dans un fichier **JSON**.
 
 ---
 
@@ -19,185 +27,134 @@ PopCornHub est une application web complète permettant de gérer une vidéothè
 - [Instructions](#-instructions)
 - [Licence](#-licence)
 
+## 🎯 Objectif du projet
+
+Ce projet a été réalisé dans un cadre pédagogique.  
+L’objectif est de mettre en place une application web **fonctionnelle**, **cohérente**, et **facile à déployer**, sans dépendance complexe (pas de base de données SQL).
+
 ---
 
-## 📖 Description
+## 🧠 Fonctionnalités principales
 
-PopCornHub est une application permettant de :
+### 🎞️ Films
+- Recherche et affichage des films via **TMDb**
+- Affiche, synopsis, année, genres, acteurs
+- Bande-annonce (YouTube)
 
-- 🎞️ Consulter les films avec leurs détails, affiches et acteurs
-- 📚 Gérer sa vidéothèque personnelle
-- ⭐ Ajouter des films en favoris
-- 🛒 Gérer les locations et les retours
-- ✍️ Publier des avis sur les films
-- 👥 Créer et gérer des comptes utilisateurs
-- 🔧 Pour les administrateurs : ajouter, supprimer et gérer les films via TMDb
+### 📚 Vidéothèque personnelle
+- Ajouter un film à sa vidéothèque
+- Définir les formats possédés :
+  - Blu-ray
+  - Digital / Streaming
+- Définir :
+  - prix de location
+  - durée maximale
+- Rendre un film **public ou privé**
+- Modifier ou supprimer un film de sa vidéothèque
 
-Une série de données d'exemple est fournie dans `data/data.json` pour faciliter les tests.
+### 🛒 Locations
+- Louer un film à un autre utilisateur
+- Choisir le format (Blu-ray / Digital)
+- Choisir la durée de location via un **popup**
+- Un exemplaire ne peut être loué **qu’une seule fois à la fois**
+- Si déjà loué :
+  - affichage “Indisponible”
+  - date de disponibilité indiquée
+- Rendre un film avant la date de fin
+- Les locations s’affichent dans le profil avec :
+  - affiche du film
+  - dates
+  - format
+  - bouton “Rendre”
+
+### ✍️ Avis
+- Ajouter ou modifier un avis sur un film
+- Note de 1 à 5
+- Commentaire
+- Moyenne affichée sur la fiche film
+
+### 👤 Utilisateurs
+- Création de compte
+- Connexion / Déconnexion
+- Pas de compte administrateur (inutile pour le projet)
 
 ---
 
 ## 🏗️ Architecture du projet
 
 ```
-PopCornHub
+PopCornHub/
 │
-├── Machine 1 : Backend Flask API
-│   └── popcornhub-api/
-│        ├── app.py
-│        ├── requirements.txt
-│        ├── data/data.json
-│        └── Dockerfile
+├── popcornhub-web/              
+│   ├── app.py
+│   ├── routes/
+│   │   ├── auth.py
+│   │   ├── films.py
+│   │   ├── profile.py
+│   ├── services/
+│   │   ├── data.py
+│   │   ├── tmdb.py
+│   │   ├── auth_utils.py
+│   ├── templates/
+│   ├── static/
+│   └── Dockerfile
 │
-└── Machine 2 : Frontend Web Flask
-    └── popcornhub-web/
-         ├── app.py
-         ├── templates/
-         ├── static/
-         ├── Dockerfile
-         └── config.py
+├── data/
+│   └── data.json                
+│
+├── docker-compose.yml
+└── README.md
 ```
-
----
-
-## ⚙️ Technologies utilisées
-
-- **Flask** - Framework pour l'API et le frontend
-- **Python 3.x** - Langage de programmation
-- **HTML / CSS / Jinja / Bootstrap** - Interface utilisateur
-- **JSON** - Stockage des données
-- **Docker & Docker Compose** - Conteneurisation
-- **TMDb API** - Intégration avec The Movie Database
-
----
-
-## 🚀 Installation & Lancement
-
-### Prérequis
-
-- Docker et Docker Compose installés
-- Accès réseau entre les deux machines
-
-### Déploiement sur deux machines
-
-| Machine | Service | Fichier à lancer |
-|---------|---------|------------------|
-| Machine 1 | Backend API | `docker-compose-api.yml` |
-| Machine 2 | Frontend Web | `docker-compose-web.yml` |
-
-### Étape 1 : Cloner le projet (sur les deux machines)
-
-```bash
-git clone git@gitlab-mi.univ-reims.fr:rt0705/popcornhub.git
-cd popcornhub
-```
-
-### Étape 2 : Lancer l'API (Machine 1)
-
-```bash
-docker-compose -f docker-compose-api.yml up --build
-```
-
-➡️ **API disponible sur** : `http://localhost:5000`
-
-### Étape 3 : Lancer le site Web (Machine 2)
-
-Avant de lancer le frontend, configurez l'adresse de l'API dans `popcornhub-web/config.py` :
-
-```python
-API_BASE_URL = "http://IP_MACHINE_API:5000"
-```
-
-Remplacez `IP_MACHINE_API` par l'adresse IP de la Machine 1.
-
-Puis lancez le frontend :
-
-```bash
-docker-compose -f docker-compose-web.yml up --build
-```
-
-➡️ **Interface Web disponible sur** : `http://localhost:8080`
-
-### Accès aux services
-
-| Service | URL | Description |
-|---------|-----|-------------|
-| Interface web | `http://localhost:8080` | Site utilisateur |
-| Backend API | `http://localhost:5000` | API REST Flask |
 
 ---
 
 ## 🗂️ Gestion des données
 
-Le fichier de données est situé dans :
+Les données sont stockées dans un fichier JSON :
+   data/data.json
 
-```
-popcornhub-api/data/data.json
-```
+Il contient :
+- utilisateurs
+- vidéothèques
+- locations
+- avis
 
-Il contient les informations suivantes :
-
-- Utilisateurs
-- Films
-- Favoris
-- Avis
-- Locations
-
-📌 **Note** : Des données d'exemple ont été ajoutées pour faciliter l'évaluation et les tests.
+👉 **Aucune base de données externe**  
+👉 Les données sont persistantes tant que le fichier existe
 
 ---
 
 ## 🎬 Intégration TMDb
 
-Le projet utilise **The Movie Database (TMDb)** pour récupérer automatiquement :
+PopCornHub utilise l’API **The Movie Database (TMDb)** pour :
+- récupérer les films
+- affiches
+- acteurs
+- bandes-annonces
 
-- Affiches des films
-- Titres et descriptions
-- Notes et popularité
-- Informations sur les acteurs
-- Genres
-
-L'intégration se fait via l'API publique de TMDb.
+Une clé API TMDb est nécessaire.
 
 ---
 
-## 🔐 Comptes disponibles
+## ⚙️ Installation & Lancement (simple)
 
-| Rôle | Identifiant | Mot de passe |
-|------|-------------|--------------|
-| 👑 Administrateur | `admin` | `admin` |
+### ✅ Prérequis
+- Docker
+- Docker Compose
 
 ---
 
-## 📁 Structure du projet
+### ▶️ Lancement du projet
 
-```
-PopCornHub/
-│
-├── popcornhub-api/           # Backend API
-│   ├── app.py                # Application Flask API
-│   ├── requirements.txt      # Dépendances Python
-│   ├── data/
-│   │   └── data.json         # Base de données JSON
-│   └── Dockerfile            # Configuration Docker
-│
-├── popcornhub-web/           # Frontend Web
-│   ├── app.py                # Application Flask Web
-│   ├── config.py             # Configuration (URL API)
-│   ├── templates/            # Templates Jinja
-│   ├── static/               # Fichiers statiques (CSS, JS)
-│   └── Dockerfile            # Configuration Docker
-│
-├── docker-compose-api.yml    # Docker Compose pour l'API
-├── docker-compose-web.yml    # Docker Compose pour le Web
-└── README.md                 # Ce fichier
+Une seule commande suffit :
+
+```bash
+docker-compose up --build
 ```
 
----
+➡️ **API disponible sur** : `http://localhost:5000`
 
-## 🧪 Instructions
-
-### Procédure de test
+## 🧪 Utilisation rapide
 
 1. **Cloner le projet** sur deux machines distinctes
 2. **Lancer l'API** sur la Machine 1 avec `docker-compose-api.yml`
@@ -227,3 +184,168 @@ Projet réalisé par Sébastien Porfiri et Elie Coutelle dans le cadre pédagogi
 ---
 
 🍿 **Bon visionnage et bon test !**
+
+# 🍿 PopCornHub
+
+PopCornHub est une application web (Flask) de **gestion de vidéothèque** et de **location de films entre utilisateurs**.
+Les fiches films (affiche, synopsis, casting, etc.) sont récupérées via **TMDb**, et toutes les données applicatives sont persistées dans un simple fichier **JSON**.
+
+---
+
+## ✨ Ce que permet l’application
+
+- 🔎 Rechercher des films (TMDb) et consulter une fiche détaillée (acteurs, bande‑annonce, avis…)
+- 📚 Ajouter un film à sa vidéothèque, définir les formats (Blu‑ray / Digital), prix et durée max
+- 🌍 Rendre un exemplaire **public** (louable par les autres) ou **privé**
+- 🛒 Louer un film à un autre utilisateur en choisissant **format** + **nombre de jours** (popup)
+- ⛔ Un exemplaire ne peut être loué **qu’une seule fois à la fois** :
+  - si déjà loué → affichage **Indisponible** + **Disponible à partir du …**
+- 🔁 Rendre un film avant la fin prévue (confirmation)
+- ✍️ Ajouter / modifier un avis (note 1→5 + commentaire)
+
+---
+
+## 🧱 Architecture (projet)
+
+```
+PopCornHub/
+├── data/
+│   └── data.json
+│
+├── popcornhub-api/
+│   ├── app.py
+│   ├── Dockerfile
+│   └── requirements.txt
+│
+├── popcornhub-web/
+│   ├── app.py
+│   ├── config.py
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── favorites.py
+│   │   ├── films.py
+│   │   └── profile.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── auth_utils.py
+│   │   ├── data.py
+│   │   └── tmdb.py
+│   ├── static/
+│   │   ├── actors/
+│   │   ├── img/
+│   │   ├── js/
+│   │   ├── default_poster.png
+│   │   └── style.css
+│   └── templates/
+│       ├── base.html
+│       ├── index.html
+│       ├── login.html
+│       ├── signup.html
+│       ├── profile.html
+│       ├── film_detail.html
+│       ├── film_availability.html
+│       ├── actor_films.html
+│       ├── my_library.html
+│       ├── my_rentals.html
+│       └── film_form.html
+│
+├── docker-compose.yml
+└── README.md
+```
+
+---
+
+## 📦 Prérequis
+
+- Docker
+- Docker Compose
+- Une clé API TMDb
+
+---
+
+## 🔑 Configuration TMDb
+
+L’app utilise TMDb. Il faut donc fournir une clé API.
+
+Selon votre `docker-compose.yml`, la clé peut être passée via une variable d’environnement.
+Le plus simple : créer un fichier `.env` à la racine du projet :
+
+```bash
+TMDB_API_KEY=VOTRE_CLE_TMDB
+```
+
+Si votre projet attend un autre nom de variable (ex: `TMDB_BEARER_TOKEN`), adaptez‑le à votre `config.py`.
+
+---
+
+## ▶️ Installation & Lancement (sur une seule machine)
+
+1) Cloner le dépôt
+
+```bash
+git clone <URL_DU_REPO>
+```
+
+2) Se placer dans le dossier du projet
+
+```bash
+cd popcornhub
+```
+
+3) Build + run
+
+```bash
+docker-compose up --build
+```
+
+4) Ouvrir l’application
+
+- **Web** : `http://localhost:8080`
+- **API** : `http://localhost:5000` (souvent utilisé en interne par le web)
+
+> Si votre `docker-compose.yml` expose d’autres ports, utilisez ceux indiqués dans le fichier.
+
+---
+
+## 🗃️ Données & persistance
+
+Toutes les données (utilisateurs, vidéothèques, locations, avis, etc.) sont stockées dans :
+
+- `data/data.json`
+
+Tant que ce fichier existe (et que le volume Docker est bien monté), vos données restent persistantes.
+
+---
+
+## 🧪 Utilisation rapide (flow conseillé)
+
+1. Créer un compte utilisateur
+2. Se connecter
+3. Rechercher un film
+4. Ajouter le film à sa vidéothèque
+5. Définir les formats et les prix (Blu‑ray / Digital + durée max)
+6. Rendre le film **public**
+7. Se connecter avec un autre compte
+8. Louer le film (choisir format + nombre de jours via le popup)
+9. Rendre le film (confirmation)
+10. Laisser un avis sur le film
+
+---
+
+## 📝 Notes de fonctionnement (important)
+
+- **Un exemplaire = (owner_id + movie_id)**
+  - tant qu’un exemplaire est loué → il est **bloqué**
+  - la page *Exemplaires disponibles* affiche alors **Indisponible** + la date **Disponible à partir du …**
+  - une fois rendu → il redevient louable
+
+---
+
+## 🧾 Licence / Crédits
+
+Projet réalisé par Sébastien Porfiri et Elie Coutelle dans un cadre pédagogique (RT0705 – Université de Reims Champagne‑Ardenne).
+
+🍿 Bon test !

@@ -6,21 +6,23 @@ html, body {
 }
 
 body {
-  background-color: #111;      /* fond presque noir */
+  background-color: #111;     
   color: #f5f5f5;
   font-family: "Poppins", system-ui, sans-serif;
   margin: 0;
 }
 
-/* Couleur globale du texte (par défaut) */
 h1, h2, h3, h4, h5, h6,
 p, span, li, label {
   color: #f5f5f5;
 }
 
-/* ============================
-   🌟 NAVBAR
-============================ */
+::placeholder {
+    color: #a3a3a3 !important;
+    opacity: 0.7;   
+}
+
+/* ============================ NAVBAR ============================ */
 .navbar-popcornhub {
   background-color: #000;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
@@ -38,9 +40,7 @@ p, span, li, label {
   opacity: 0.85;
 }
 
-/* ============================
-   🟠 BOUTONS POPCORNHUB
-============================ */
+/* =========================== BOUTONS =========================== */
 .btn-popcorn-primary {
   background-color: #ff9800;
   border: none;
@@ -78,7 +78,6 @@ p, span, li, label {
   background-color: #555;
 }
 
-/* override Bootstrap .btn-primary si tu l'utilises */
 .btn-primary {
   background-color: #ff9800;
   border: none;
@@ -89,9 +88,7 @@ p, span, li, label {
   background-color: #ffa726;
 }
 
-/* ============================
-   🧭 TITRES & BARRE DE RECHERCHE
-============================ */
+/* ============================ TITRES & BARRE DE RECHERCHE ============================ */
 .page-title {
   font-size: 2.6rem;
   font-weight: 800;
@@ -116,16 +113,13 @@ p, span, li, label {
   box-shadow: 0 0 0 2px #ff9800aa;
 }
 
-/* ============================
-   🎬 CARDS FILMS (INDEX, PROFIL…)
-============================ */
+/* ============================ CARDS FILMS (INDEX, PROFIL…) ============================ */
 
 .film-card-link {
   text-decoration: none;
   color: inherit;
 }
 
-/* Carte principale */
 .film-card {
   background-color: #151515;
   border-radius: 24px;
@@ -144,7 +138,6 @@ p, span, li, label {
   box-shadow: 0 26px 50px rgba(0, 0, 0, 0.8);
 }
 
-/* Affiche */
 .film-card-poster {
   width: 100%;
   height: 100%;
@@ -153,7 +146,6 @@ p, span, li, label {
   border-radius: 14px 14px 0 0;
 }
 
-/* Corps texte de la carte */
 .film-card-body {
   padding: 1rem 1.1rem 1.1rem;
 }
@@ -169,83 +161,7 @@ p, span, li, label {
   opacity: 0.85;
 }
 
-/* ============================
-   ❤️ FAVORIS (COEUR)
-============================ */
-.favorite-form {
-  margin: 0;
-}
-
-.favorite-btn {
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-}
-
-.favorite-btn:focus {
-  outline: none;
-}
-
-.favorite-icon {
-  font-size: 1.6rem;
-  color: rgba(255, 255, 255, 0.4);
-  transition:
-    transform 0.2s ease,
-    color 0.2s ease,
-    text-shadow 0.2s ease;
-}
-
-/* Grossit au survol */
-.favorite-btn:hover .favorite-icon {
-  transform: scale(1.25);
-}
-
-/* Coeur actif (film en favori) */
-.favorite-btn.is-favorite .favorite-icon {
-  color: #ff9800;
-  text-shadow: 0 0 8px rgba(255, 152, 0, 0.8);
-}
-
-/* ============================
-   📌 MA LISTE (PIN)
-============================ */
-.pin-form {
-  margin: 0;
-}
-
-.pin-btn {
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-}
-
-.pin-btn:focus {
-  outline: none;
-}
-
-.pin-icon {
-  font-size: 1.6rem;
-  color: rgba(255, 255, 255, 0.4);
-  transition:
-    transform 0.2s ease,
-    color 0.2s ease,
-    text-shadow 0.2s ease;
-}
-
-.pin-btn:hover .pin-icon {
-  transform: scale(1.25);
-}
-
-.pin-btn.is-in-list .pin-icon {
-  color: #ff9800;
-  text-shadow: 0 0 8px rgba(255, 152, 0, 0.8);
-}
-
-/* ============================
-   🔢 PAGINATION
-============================ */
+/* ============================ PAGINATION ============================ */
 .pagination .page-link {
   background-color: #1f1f1f;
   border-color: #333;
@@ -264,11 +180,8 @@ p, span, li, label {
   color: #111;
 }
 
-/* ============================
-   👤 PROFIL — SIDEBAR & VIDÉOTHÈQUE
-============================ */
+/* ============================ PROFIL — SIDEBAR & VIDÉOTHÈQUE ============================ */
 
-/* Layout global avec sidebar à gauche */
 .layout-with-sidebar {
   display: flex;
   gap: 2rem;
@@ -284,7 +197,6 @@ p, span, li, label {
   flex: 1;
 }
 
-/* Carte de la sidebar */
 .profile-sidebar-card {
   background-color: #151515;
   border-radius: 18px;
@@ -319,7 +231,6 @@ p, span, li, label {
   font-weight: 600;
 }
 
-/* Titres & sections du profil */
 .profile-header {
   margin-bottom: 1.75rem;
 }
@@ -339,7 +250,6 @@ p, span, li, label {
   font-size: 0.95rem;
 }
 
-/* Grille des films dans la vidéothèque */
 .cards-grid--library {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -402,7 +312,6 @@ p, span, li, label {
   color: #ccc;
 }
 
-/* Badge public / privé */
 .badge-status {
   border-radius: 999px;
   padding: 0.15rem 0.6rem;
@@ -422,7 +331,6 @@ p, span, li, label {
   color: #bbb;
 }
 
-/* Résumé des formats & prix */
 .library-summary {
   font-size: 0.8rem;
 }
@@ -486,7 +394,6 @@ p, span, li, label {
   color: var(--text-muted, #9ca3af);
 }
 
-/* Modal de modification dans la vidéothèque */
 .profile-modal {
   background-color: #181818;
   color: #fff;
@@ -522,9 +429,7 @@ p, span, li, label {
   box-shadow: 0 0 0 1px #ff9800aa;
 }
 
-/* ============================
-   🎭 ACTEURS
-============================ */
+/* ============================ ACTEURS ============================ */
 .actor-pill {
   display: inline-flex;
   align-items: center;
@@ -547,9 +452,7 @@ p, span, li, label {
   font-size: 0.95rem;
 }
 
-/* ============================
-   🧾 FORM CARDS (login, signup, admin)
-============================ */
+/* ============================ FORM CARDS (login, signup, admin) ============================ */
 .form-card {
   background-color: #151515;
   border-radius: 18px;
@@ -577,27 +480,7 @@ p, span, li, label {
   box-shadow: 0 0 0 1px #ff9800aa;
 }
 
-/* ============================
-   🎬 ECRAN DE LECTURE
-============================ */
-.watch-player {
-  margin-top: 1rem;
-  max-width: 800px;
-}
-
-.watch-screen {
-  background: #000;
-  border-radius: 18px;
-  padding: 3rem 2rem;
-  text-align: center;
-  border: 2px solid #ff9800;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
-  font-size: 1.1rem;
-}
-
-/* ============================
-   🟩 BADGE LOCATION EN COURS
-============================ */
+/* ============================ BADGE LOCATION EN COURS ============================ */
 .rental-badge {
   position: absolute;
   top: 10px;
@@ -611,7 +494,6 @@ p, span, li, label {
   font-size: 0.75rem;
 }
 
-/* Centrage vertical des modales Bootstrap (location, etc.) */
 .modal.show .modal-dialog {
   margin: 0 auto;
   min-height: 100vh;
@@ -619,13 +501,12 @@ p, span, li, label {
   align-items: center;
 }
 
-/* Backdrop pour les modales custom (ex. disponibilité / location) */
 .modal-backdrop,
 .ph-modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.65);
-  display: none;              /* le JS passe à display:flex quand on ouvre */
+  display: none;              
   align-items: center;
   justify-content: center;
   z-index: 1050;
@@ -662,9 +543,7 @@ p, span, li, label {
   margin-bottom: 6px;
 }
 
-/* ============================
-   📦 PAGE EXEMPLAIRES DISPONIBLES
-============================ */
+/* ============================ PAGE EXEMPLAIRES DISPONIBLES ============================ */
 
 /* En-tête */
 .availability-page .page-header {
@@ -683,8 +562,6 @@ p, span, li, label {
   font-size: 0.98rem;
   max-width: 900px;
 }
-
-/* ---------- Filtres en ligne ---------- */
 
 .availability-filters {
   margin-bottom: 1.8rem;
@@ -715,7 +592,6 @@ p, span, li, label {
   display: none !important;
 }
 
-/* Labels discrets */
 .availability-filters label {
   display: block;
   font-size: 0.8rem;
@@ -725,7 +601,6 @@ p, span, li, label {
   margin-bottom: 0.25rem;
 }
 
-/* Inputs & selects en mode pilles */
 .availability-filters .form-select,
 .availability-filters .form-control {
   border-radius: 999px;
@@ -748,14 +623,12 @@ p, span, li, label {
   box-shadow: 0 0 0 2px #fb923caa;
 }
 
-/* Bouton Filtrer */
 .availability-filters .btn-popcorn-primary {
   height: 2.6rem;
   padding-inline: 2.2rem;
   white-space: nowrap;
 }
 
-/* Responsive : filtres en colonne sur mobile */
 @media (max-width: 768px) {
   .availability-filters .filters-row {
     flex-direction: column;
@@ -774,8 +647,6 @@ p, span, li, label {
   }
 }
 
-/* ---------- Liste des exemplaires ---------- */
-
 .availability-list {
   display: flex;
   flex-direction: column;
@@ -786,9 +657,9 @@ p, span, li, label {
   position: relative;
   border-radius: 24px;
   padding: 1rem 1.4rem;
-  background-color: #151515;                     /* comme les film-card */
-  border: 1px solid rgba(255, 255, 255, 0.06);   /* léger cadre */
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);    /* même style d'ombre */
+  background-color: #151515;                     
+  border: 1px solid rgba(255, 255, 255, 0.06);   
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);   
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease,
@@ -798,7 +669,7 @@ p, span, li, label {
 .availability-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.9);
-  border-color: rgba(251, 146, 60, 0.85); /* petit halo orange au survol */
+  border-color: rgba(251, 146, 60, 0.85); 
 }
 
 .availability-card-main {
@@ -815,7 +686,6 @@ p, span, li, label {
   }
 }
 
-/* Partie gauche : propriétaire + formats / prix */
 .availability-owner {
   display: flex;
   flex-direction: column;
@@ -827,7 +697,6 @@ p, span, li, label {
   font-size: 1.02rem;
 }
 
-/* Lignes de prix par format */
 .availability-prices {
   font-size: 0.9rem;
   color: #e5e7eb;
@@ -855,7 +724,6 @@ p, span, li, label {
   gap: 0.35rem;
 }
 
-/* Partie droite : actions */
 .availability-actions {
   flex-shrink: 0;
   margin-left: auto;
@@ -868,9 +736,13 @@ p, span, li, label {
   font-weight: 600;
 }
 
-/* Message aucun résultat */
 .availability-empty {
   color: #9ca3af;
   font-size: 0.95rem;
   margin-top: 0.9rem;
+}
+
+.rental-dates {
+  color: #ffffff;
+  opacity: 0.9;
 }

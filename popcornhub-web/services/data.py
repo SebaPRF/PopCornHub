@@ -1,14 +1,7 @@
 import os
 import requests
 
-# Adresse par défaut de l'API quand on est dans Docker
-# (nom du service dans docker-compose-api.yml)
-DEFAULT_API_URL = "http://popcornhub-api:5000"
-
-# Permet de surcharger facilement en dehors de Docker :
-#   API_URL=http://127.0.0.1:5000 flask run
-API_URL = os.getenv("API_URL", DEFAULT_API_URL)
-
+API_URL = os.getenv("API_URL", "http://api:5000")
 
 def load_data():
     r = requests.get(f"{API_URL}/data", timeout=5)
@@ -47,7 +40,6 @@ def get_user_by_id(data, user_id):
 
 
 def find_ownership(data, user_id, movie_id):
-    """Retourne l'enregistrement 'user_owns' pour un user/film ou None."""
     for own in data.get("user_owns", []):
         if own["user_id"] == user_id and own["movie_id"] == movie_id:
             return own

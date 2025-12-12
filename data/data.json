@@ -1,56 +1,166 @@
 {
-  "favorites": {
-    "2": [
-      1180831,
-      755898
-    ]
-  },
-  "library": {
-    "2": [
-      1419406
-    ]
-  },
+  "catalog": [],
+  "deleted_films": [],
+  "favorites": {},
+  "film_overrides": {},
+  "library": {},
   "rentals": [
     {
-      "expires_at": "2025-12-11T13:20:08",
+      "expires_at": "2025-12-12T09:46:20",
+      "format": "digital",
       "id": 1,
-      "movie_id": 1228246,
-      "price_cents": 399,
-      "rented_at": "2025-12-08T13:20:08",
+      "movie_id": 1084242,
+      "owner_id": 1,
+      "price_cents": 249,
+      "rented_at": "2025-12-11T16:12:27",
+      "user_id": 2
+    },
+    {
+      "expires_at": "2025-12-12T09:59:03",
+      "format": "digital",
+      "id": 2,
+      "movie_id": 1084242,
+      "owner_id": 1,
+      "price_cents": 249,
+      "rented_at": "2025-12-11T17:25:23",
+      "user_id": 2
+    },
+    {
+      "expires_at": "2025-12-12T09:07:39",
+      "format": "digital",
+      "id": 3,
+      "movie_id": 1084242,
+      "owner_id": 1,
+      "price_cents": 249,
+      "rented_at": "2025-12-12T09:07:32",
+      "user_id": 5
+    },
+    {
+      "expires_at": "2025-12-12T10:00:03",
+      "format": "digital",
+      "id": 4,
+      "movie_id": 1084242,
+      "owner_id": 1,
+      "price_cents": 249,
+      "rented_at": "2025-12-12T09:59:12",
+      "user_id": 2
+    },
+    {
+      "expires_at": "2025-12-12T10:07:30",
+      "format": "digital",
+      "id": 5,
+      "movie_id": 1084242,
+      "owner_id": 1,
+      "price_cents": 249,
+      "rented_at": "2025-12-12T10:07:20",
       "user_id": 2
     }
   ],
   "reviews": [
     {
-      "comment": "J'ai peur",
-      "created_at": "2025-12-08T13:20:15",
+      "comment": "Encore meilleur que le 1, je recommande !",
+      "created_at": "2025-12-10T21:08:09",
       "id": 1,
+      "movie_id": 1084242,
+      "rating": 5,
+      "user_id": 1
+    },
+    {
+      "comment": "Pas mal mais je préfère le 2.",
+      "created_at": "2025-12-10T22:08:09",
+      "id": 2,
+      "movie_id": 269149,
+      "rating": 3,
+      "user_id": 1
+    }
+  ],
+  "user_owns": [
+    {
+      "bluray_max_days": null,
+      "bluray_price": null,
+      "digital_max_days": 20,
+      "digital_price": 2.49,
+      "has_bluray": false,
+      "has_digital": true,
+      "is_public": true,
+      "movie_id": 1084242,
+      "user_id": 1
+    },
+    {
+      "bluray_max_days": null,
+      "bluray_price": null,
+      "digital_max_days": 15,
+      "digital_price": 3.2,
+      "has_bluray": false,
+      "has_digital": true,
+      "is_public": true,
       "movie_id": 1228246,
-      "rating": 4,
+      "user_id": 1
+    },
+    {
+      "bluray_max_days": 13,
+      "bluray_price": 8.5,
+      "digital_max_days": 30,
+      "digital_price": 1.65,
+      "has_bluray": true,
+      "has_digital": true,
+      "is_public": true,
+      "movie_id": 269149,
+      "user_id": 1
+    },
+    {
+      "bluray_max_days": 10,
+      "bluray_price": 8.99,
+      "digital_max_days": 3,
+      "digital_price": 3.5,
+      "has_bluray": true,
+      "has_digital": true,
+      "is_public": false,
+      "movie_id": 533533,
+      "user_id": 1
+    },
+    {
+      "bluray_max_days": null,
+      "bluray_price": null,
+      "digital_max_days": 4,
+      "digital_price": 3.55,
+      "has_bluray": false,
+      "has_digital": true,
+      "is_public": false,
+      "movie_id": 1419406,
       "user_id": 2
     }
   ],
   "users": [
     {
-      "email": "admin@popcornhub.local",
       "id": 1,
-      "is_admin": true,
-      "password_hash": "scrypt:32768:8:1$WDoNH5eBdAWTXQ8O$151d160eb7dc12889de66cdd39f38a5880d70092a0a9fe83db32d9db620092296835ad46f11c8ed476a2942b6e1ec3a58fd6dfe12a4f3638acce6646563b3a24",
-      "username": "admin"
+      "password_hash": "scrypt:32768:8:1$e5PzUH8USPgkmuLV$affb94d2fb8146b387c51552e740405691e0d3b4b38726f1dd4911d21ae218b5e32b60117fc4559518d3e8f1b5b79707b500d3db4fe66d049454cfc55cb03603",
+      "username": "seba.prf"
     },
     {
-      "email": "elie.ctl@gmail.com",
       "id": 2,
-      "is_admin": false,
-      "password_hash": "scrypt:32768:8:1$bZlxC7ULHf9AAQ7v$b6c88adff861620e12f6fb9225999a15ca0069ac0da8b593f232d4fbcfe357ff610795f7bef595264c2af0b6e34d2415a49681bad59d578d8a978f0990169316",
-      "username": "eliectl"
+      "password_hash": "scrypt:32768:8:1$pNstUFbUNnaUrgOO$c3dc4dc4a4b67c37e27dfd8d9269e9d674de523f255a7ec42de8a1bfa7755c63cb0b506bc4aa90abfba75228d06a03c53872738dac85b22c0280d061d73e2b63",
+      "username": "elie.ctl"
     },
     {
       "id": 3,
-      "username": "seba.prf",
-      "email": "seba.prf@gmail.com",
-      "password_hash": "scrypt:32768:8:1$vvIz86BmyXRfuPSG$0dfbf6c9956a9c7eac72abc6f3b85cb487b35c9ccad62fbd27363d196dddb90d304a7ac41eb8678f0055b20ef4e9d6efd0ac6c9c417909e4be2aaeee4bf43701",
-      "is_admin": false
+      "password_hash": "scrypt:32768:8:1$ysndjnKASZXVtckF$cc967851456dc732136456304871de954872057eaad9cf53eb427a0bb99e9fb0b5587de3914d9bf5bb446ff8af8c39ee403de643a9089f60c7bd626fa1dd399a",
+      "username": "o.flauzac"
+    },
+    {
+      "id": 4,
+      "password_hash": "scrypt:32768:8:1$7gLL4L78yqMoZnfY$7a8105412963c9dfcf62f148f86ebecc29d50c80706aa7f5a0ba1169b4416295772a823c88b1c616b3ec9cfb2aecb7ccf97bbf1f356616ba021fb83346e8ba25",
+      "username": "f.nolot"
+    },
+    {
+      "id": 5,
+      "password_hash": "scrypt:32768:8:1$SZ9lekZYryDUjtTr$739a36ee81221454e99ac5d1f0d1ef783d5df3f431f13d78fd7ede2a0cb77bdaffcf7e74ae48e790a8b9064fea503bc9c5b08008d6557f1ad0aea9abfb5d8d24",
+      "username": "v.william"
+    },
+    {
+      "id": 6,
+      "password_hash": "scrypt:32768:8:1$lW277i6KUKSvW4xO$6258731263b319c13e02fdbc1c8ba5befc14aa40b07d6a8a9dc3ecc0106a2c6a79a6d976177ca3a993fac80bf9b97df710490b5114d0c9dab4c54030c5b8543a",
+      "username": "t.moussa"
     }
   ]
 }
